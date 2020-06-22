@@ -2,7 +2,7 @@
 	"name": "E-mergo Triggers",
 	"type": "visualization",
 	"author": "Laurens Offereins, E-mergo",
-	"version": "0.5.20191213",
+	"version": "1.0.20200622",
 	"description": "Trigger advanced actions and navigation based on app events.",
 	"preview": "logo-emergo.png",
 	"license": "MIT License",
