@@ -1,0 +1,56 @@
+/**
+ * E-mergo Triggers Styles
+ *
+ * @package E-mergo Tools Bundle
+ */
+.qs-emergo-triggers.requirements-wrapper {
+}
+
+.qs-emergo-triggers.requirements-wrapper .requirements {
+	font-size: 13px;
+	font-weight: 700;
+	text-align: center;
+}
+
+.qv-layout-xsmall .qs-emergo-triggers.requirements-wrapper .requirements {
+	width: 200px;
+}
+
+.qs-emergo-triggers.requirements-wrapper .requirements .trigger-count {
+}
+
+.qs-emergo-triggers.requirements-wrapper .requirements .trigger-list {
+	padding: 20px 0px 0px 20px;
+	line-height: 24px;
+	text-align: left;
+}
+
+.qs-emergo-triggers.requirements-wrapper .requirements .trigger-list .trigger-item {
+	width: 230px;
+}
+
+.qs-emergo-triggers.requirements-wrapper .requirements .trigger-list .trigger-item.disabled {
+	text-decoration: line-through;
+	color: #999;
+}
+
+.qv-layout-xsmall .qs-emergo-triggers.requirements-wrapper .requirements .trigger-list .trigger-item {
+	width: 180px;
+}
+
+.qs-emergo-triggers.requirements-wrapper .requirements .trigger-list .trigger-label {
+	display: block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Card-based themes */
+
+.qv-client.qv-card #qv-stage-container .qv-panel:not(.qv-mode-edit) #grid .qv-object-wrapper .qv-object-qs-emergo-triggers {
+	border: 0px;
+}
+
+.qv-client.qv-card #qv-stage-container .qv-panel:not(.qv-mode-edit) #grid .qv-object-wrapper .qv-object-qs-emergo-triggers .qv-inner-object {
+	background: transparent !important;
+}

@@ -1,0 +1,15 @@
+<div class="qs-emergo-triggers requirements-wrapper" ng-if="object.inEditState()">
+	<span class="requirements" title="{{triggerCount()}}">
+		<h2 class="header">
+			<i class="object-icon lui-icon lui-icon--control"></i>
+		</h2>
+
+		<span class="trigger-count">{{triggerCount()}}</span>
+
+		<ol class="trigger-list" ng-if="layout.props.triggers.length">
+			<li class="trigger-item" ng-repeat="t in layout.props.triggers" ng-class="{'disabled': ! t.enabled}">
+				<span class="trigger-label">{{t.label}}</span>
+			</li>
+		</ol>
+	</span>
+</div>
