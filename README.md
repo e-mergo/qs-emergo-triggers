@@ -9,9 +9,9 @@ QEXT: qs-emergo-triggers.qext
 
 **E-mergo Triggers** is a Qlik Sense visualization extension created by [E-mergo](https://www.e-mergo.nl). This extension enables the dashboard designer to insert event listeners that trigger actions each time the events happen. Among the selectable events are changes in field selections, changes in measure values, and sheet navigation.
 
-This extension is part of the [E-mergo Tools bundle](https://www.e-mergo.nl/e-mergo-tools-bundle).
+This extension is part of the [E-mergo Tools bundle](https://www.e-mergo.nl/e-mergo-tools-bundle/?utm_medium=download&utm_source=tools_bundle&utm_campaign=E-mergo_Extension&utm_term=toolsbundle&utm_content=sitelink).
 
-This extension is [hosted on GitHub](https://github.com/emergo/qs-emergo-triggers). You can report bugs and discuss features on the [issues page](https://github.com/emergo/qs-emergo-triggers/issues).
+This extension is [hosted on GitHub](https://github.com/e-mergo/qs-emergo-triggers). You can report bugs and discuss features on the [issues page](https://github.com/e-mergo/qs-emergo-triggers/issues).
 
 ## Why is this extension needed?
 As per version September 2018, Qlik Sense enables the setting of *default bookmarks* as part of 'advanced authoring'. Default bookmarks are effectively a trigger that consists of an action 'selecting field values' which is run on the event 'open app'. In Qlik Sense, this is the only single event listener for which a single action can be triggered.
