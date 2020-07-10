@@ -115,6 +115,7 @@ define([
 	}, {
 		label: "Time Passed",
 		value: "registerTimer",
+		valueLabel: "Time in seconds",
 		showValue: true,
 		eitherOrOptions: [{
 			label: "Once",
@@ -994,7 +995,9 @@ define([
 			}
 		},
 		value: {
-			label: "Value",
+			label: function( item ) {
+				return getProperty(item, "valueLabel") || "Value";
+			},
 			type: "string",
 			expression: "optional",
 			ref: "value",
