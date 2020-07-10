@@ -1,7 +1,7 @@
 /**
  * E-mergo Events Utility Library
  *
- * @version 20190724
+ * @version 20200710
  * @author Laurens Offereins <https://github.com/lmoffereins>
  *
  * @param  {Object} qlik              Qlik API
@@ -115,7 +115,7 @@ define([
 	}, {
 		label: "Time Passed",
 		value: "registerTimer",
-		valueLabel: "Time in seconds",
+		valueLabel: "Interval (seconds)",
 		showValue: true,
 		eitherOrOptions: [{
 			label: "Once",
@@ -145,6 +145,16 @@ define([
 	 */
 	booleanFromExpression = function( a ) {
 		return "undefined" === typeof a || "" === a || isNaN(parseInt(a)) || !! parseInt(a);
+	},
+
+	/**
+	 * Return a number from an expression's result
+	 *
+	 * @param  {String}  a Expression's result
+	 * @return {Number}    Does the expression evaluate to a number
+	 */
+	numberFromExpression = function( a ) {
+		return "undefined" !== typeof a && ! isNaN(parseInt(a)) ? parseInt(a) : 0;
 	},
 
 	/**
@@ -805,7 +815,11 @@ define([
 	 * @return {Promise}      Event handlers
 	 */
 	registerTimer = function( item ) {
-		var timerWindow = "undefined" !== typeof item.value && ! isNaN(parseInt(item.value)) ? parseInt(item.value) : 0,
+
+		// Timer vars are evaluated once on registration
+		var timerInterval = numberFromExpression(item.value),
+		    timerStart = numberFromExpression(item.timePassedStartAfter),
+		    timerDuration = numberFromExpression(item.timePassedDuration),
 		    timerDone = false;
 
 		return $q.resolve({
@@ -816,17 +830,34 @@ define([
 			 * @return {Promise} Event is mounted
 			 */
 			mount: function( triggerActions ) {
+				var objId = this.$id;
 
 				// Register the timer trigger
-				timerTriggers[this.$id][item.cId] = function( timePassed ) {
+				timerTriggers[objId][item.cId] = function( timePassed ) {
+
+					// Require start-after
+					if (item.eitherOr && timerStart) {
+						timePassed = Math.max(timePassed - timerStart, 0);
+					}
+
+					// Require end-before
+					if (item.eitherOr && timerDuration && timePassed >= timerDuration) {
+						timerDone = true;
+					}
 
 					// When the required time is passed, run trigger
-					if (timerWindow && ! timerDone && 0 === (timePassed % timerWindow)) {
+					if (timerInterval && timePassed && ! timerDone && 0 === (timePassed % timerInterval)) {
 
-						// Flag whether the timer is done
+						// Flag whether the timer is done (trigger once)
 						timerDone = ! item.eitherOr;
 
+						// Execute the trigger's actions
 						triggerActions();
+					}
+
+					// Remove this callback from the timer when it is done
+					if (timerDone) {
+						delete timerTriggers[objId][item.cId];
 					}
 				};
 
@@ -1007,6 +1038,38 @@ define([
 
 				// Hide when no field is selected for the `clearField` event
 				if ("clearField" === item.event && ! item.field) {
+					show = false;
+				}
+
+				return show;
+			}
+		},
+		timePassedStartAfter: {
+			label: "Start after (seconds)",
+			type: "string",
+			expression: "optional",
+			ref: "timePassedStartAfter",
+			defaultValue: "",
+			show: function( item ) {
+				var show = "registerTimer" === item.event;
+
+				if (! item.eitherOr) {
+					show = false;
+				}
+
+				return show;
+			}
+		},
+		timePassedDuration: {
+			label: "Duration (seconds)",
+			type: "string",
+			expression: "optional",
+			ref: "timePassedDuration",
+			defaultValue: "",
+			show: function( item ) {
+				var show = "registerTimer" === item.event;
+
+				if (! item.eitherOr) {
 					show = false;
 				}
 
