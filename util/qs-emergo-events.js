@@ -775,14 +775,10 @@ define([
 			// outside overwriting of the `timePassed` counter variable.
 			j = timePassed;
 
-			// Resolve all registered timer triggers in order of registration. This
-			// effectively comes down to: first in order of the page layout, then in
-			// order of actions.
-			_.flatten(_.values(timerTriggers).map(_.values)).reduce( function( promise, i ) {
-				return promise.then( function() {
-					i(j);
-				});
-			}, $q.resolve());
+			// Run all registered timer triggers at the same time
+			_.flatten(_.values(timerTriggers).map(_.values)).forEach( function( i ) {
+				i(j);
+			});
 
 			// Continue time
 			timerTimeout = setTimeout(timerRun, 1000);
