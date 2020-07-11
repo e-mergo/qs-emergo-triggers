@@ -174,7 +174,7 @@ define([
 				type: "items",
 				items: {
 					description: {
-						label: "When setting up triggers, mind that they will be triggered sequentially, to limit the risk of infinite action loops. So the actions of each trigger will impact whether the following ones will be triggered.",
+						label: "Triggers may run simultaneously. Actions of a trigger may fire events that release other triggers. When setting up triggers be aware that you do not create infinite action loops.",
 						component: "text",
 						style: "hint"
 					},
