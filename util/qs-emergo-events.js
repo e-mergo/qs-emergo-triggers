@@ -342,7 +342,8 @@ define([
 			mount: function( triggerActions ) {
 				var prev = { selected: "" };
 
-				// Start session object
+				// Start session object. The object is created once, but its callback
+				// will be run everytime the object's hypercube is refreshed.
 				return app.createGenericObject(def, function( obj ) {
 
 					// Store the obj reference
@@ -526,7 +527,8 @@ define([
 			mount: function( triggerActions ) {
 				var prev = { selected: "", other: "" };
 
-				// Start session object
+				// Start session object. The object is created once, but its callback
+				// will be run everytime the object's hypercube is refreshed.
 				return app.createGenericObject(def, function( obj ) {
 
 					// Store the obj reference
@@ -578,7 +580,7 @@ define([
 				 * expression from the property panel that auto-updates with every engine update.
 				 * When the value of the expression updates, trigger the actions when appropriate.
 				 *
-				 * NB: since the engine updates already update the entire view, there is no need
+				 * NB: since the engine's updates already refresh the entire view, there is no need
 				 * for running a dedicated `$digest` for this watcher that is out of `$scope`.
 				 */
 				unwatcher = qvangular.$rootScope.$watch( function() {
@@ -645,7 +647,8 @@ define([
 			mount: function( triggerActions ) {
 				var prev = "";
 
-				// Start session object
+				// Start session object. The object is created once, but its callback
+				// will be run everytime the object's hypercube is refreshed.
 				return app.createGenericObject(def, function( obj ) {
 
 					// Store the obj reference
@@ -713,7 +716,7 @@ define([
 			mount: function( triggerActions ) {
 				/**
 				 * Consider the 'open sheet' event when the event container (extension object) is
-				 * mounted, so immediately trigger actions on mount.
+				 * mounted, which means to immediately trigger actions on mount.
 				 */
 				triggerActions();
 

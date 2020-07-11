@@ -86,13 +86,13 @@ define([
 		$scope.setupEventListeners = function( triggerIds ) {
 			var setupable = [];
 
-			// Get the selected triggers
+			// Get the selected triggers from the extension's layout
 			if (! _.isEmpty(triggerIds)) {
 				setupable = $scope.layout.props.triggers.filter( function( i ) {
 					return -1 !== triggerIds.indexOf(i.cId);
 				});
 
-			// Get all registered triggers
+			// Get all registered triggers from the extension's layout
 			} else if ("undefined" === typeof triggerIds ) {
 				setupable = $scope.layout.props.triggers;
 			}
@@ -100,15 +100,21 @@ define([
 			// Walk all setupables
 			return setupable.reduce( function( promise, trigger ) {
 				return promise.then( function() {
-					var triggerer = emergoEvents.options[trigger.event];
+					var setupTrigger = emergoEvents.options[trigger.event];
 
 					/**
 					 * Setup event listener by mounting it's trigger logic
+					 *
+					 * The `setupTrigger` method uses the registered layout properties in the `trigger` object
+					 * to setup the event listener. Using the `mount` method on the trigger's `event` object
+					 * the eventual do-action callback gets registered. This callback first checks at the moment
+					 * the actual event is fired whether the trigger's conditions are still met (enabled,
+					 * run-trigger-if).
 					 */
-					return triggerer && triggerer(trigger, $scope).then( function( event ) {
+					return setupTrigger && setupTrigger(trigger, $scope).then( function( event ) {
 						var dfd = $q.defer();
 
-						// Add event to the set of events
+						// Add event to the set of registered events
 						if (event) {
 							event.cId = trigger.cId;
 							events.push(event);
@@ -119,7 +125,7 @@ define([
 							event.mount.call($scope, function() {
 
 								// Get the fresh trigger data from the layout at this point. Various parts of the
-								// trigger data could have been updated in between mounting and triggering.
+								// trigger data could have been re-evaluated in between mounting and triggering.
 								var a = $scope.layout.props.triggers.find( function( i ) {
 									return i.cId === trigger.cId;
 								});
