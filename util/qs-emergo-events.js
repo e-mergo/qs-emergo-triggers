@@ -1113,33 +1113,34 @@ define([
 			 * @param  {Object} item The item's layout
 			 * @return {Array}
 			 */
-			options: function( item ) {
+			options: (function() {
 				/**
-				 * In an `options` method, the initial call has the correct
-				 * `item` parameter as the item's layout. In subsequent calls,
-				 * the first parameter is replaced by the global extension layout.
-				 * To fix this, the parameter is stored in the method's context
-				 * `this` as per the initial call, when `item` is correct. The
-				 * subsequent calls will use this stored version.
+				 * In the `options` method the initial call has the correct
+				 * `item` parameter as the item's layout. However in subsequent
+				 * calls the first parameter is replaced by the global extension
+				 * layout. It contains all registered items, so there is no
+				 * telling which item to get the options from. This is a bug in QS.
 				 *
-				 * A fix is announced for QS November 2019.
+				 * To fix this, the parameter is stored in a separate variable
+				 * within a closure. The first and subsequent calls will then use
+				 * this stored version of the item.
 				 */
-				if (item.cId) {
-					this.emergoEventsEitherOrOptionsItem = item;
-				} else {
-					item = this.emergoEventsEitherOrOptionsItem;
-				}
+				var _item;
+				return function( item ) {
+					if ("undefined" === typeof _item) {
+						_item = item;
+					}
 
-				// Get the options
-				var options = getProperty(item, "eitherOrOptions");
+					var options = getProperty(_item, "eitherOrOptions");
 
-				// Run callback when provided
-				if ("function" === typeof options) {
-					options = options(item);
-				}
+					// Run callback when provided
+					if ("function" === typeof options) {
+						options = options(_item);
+					}
 
-				return options || [false, true];
-			},
+					return options || [false, true];
+				};
+			})(),
 			show: function( item ) {
 				var show = showProperty(item, "eitherOrOptions");
 
