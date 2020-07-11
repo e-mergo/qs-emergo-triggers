@@ -127,9 +127,6 @@ After all triggered actions are successfully handled, a navigation action may ki
 
 ## FAQ
 
-### What are the known issues?
-- 20190909.1 In the extension's property panel, when selecting an app's sheet to navigate to, the incorrect sheets may be listed. This happens when multiple triggers in a single visualization object use Navigate to Dashboard. A fix is expected in QS November 2019.
-
 ### Can I get support for this extension?
 E-mergo provides paid support through standard support contracts. For other scenarios, you can post your bugs or questions in the extension's GitHub repository.
 
