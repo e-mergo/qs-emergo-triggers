@@ -1,7 +1,7 @@
 ---
 Qlik Sense Visualization Extension
 Name: E-mergo Triggers
-Version: 1.0.20200623
+Version: 1.1.20200713
 QEXT: qs-emergo-triggers.qext
 ---
 
@@ -139,6 +139,12 @@ E-mergo provides paid support through standard support contracts. For other scen
 Requests for additional features can be posted in the extension's GitHub repository. Depending on your own code samples and the availability of E-mergo developers your request may be considered and included.
 
 ## Changelog
+
+#### 1.1.20200713
+- Added Start After and Duration settings for the Time Passed event
+- Added the Log to Console action
+- Fixed the execution of triggers for the Time Passed event to run in parallel
+- Fixed selection of Dual values for the Select Adjacent Value action
 
 #### 1.0.20200623
 - Updated docs files
