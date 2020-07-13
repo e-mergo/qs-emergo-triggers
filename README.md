@@ -34,7 +34,7 @@ Below is a detailed description of the available features of this extension.
 ### Triggers
 Create a set of triggers. Do this by adding triggers one by one through the *Add Trigger* button.
 
-When setting up triggers, mind that they will be triggered sequentially, to limit the risk of infinite action loops. So the actions of each trigger will impact whether the following ones will be triggered.
+Actions of a trigger may fire events that release other triggers. Triggers may run simultaneously. When setting up triggers be aware that you do not create infinite action loops.
 
 `Note that triggers are only effective for the sheet on which they are registered.`
 
@@ -44,7 +44,7 @@ When setting up triggers, mind that they will be triggered sequentially, to limi
 The trigger label is used as an identifier and as a means to organize the set of triggers on the extension object. A label prefixed with `//` signals that the trigger is disabled.
 
 ### Run trigger if
-Works like conditional show in the Table and Pivot Table visualizations. Using the expression field for conditional run, the trigger can be run depending on a measure's value, a variable's value or any other comparison. This effectively enables an additional threshold which sanctions the trigger. Return a non-zero, non-empty value to block the trigger from running, otherwise the trigger is always run on the selected event.
+Works like conditional show in the Table and Pivot Table visualizations. Using the expression field for conditional run, the trigger can be run depending on a measure's value, a variable's value or any other comparison. This effectively enables an additional threshold which sanctions the trigger. Return a non-empty falsey value (usually zero) to block the trigger from running, otherwise the trigger is always run on the selected event.
 
 ### Event
 Select on which event the trigger should listen for triggering its actions. Some event types require additional parameters:
@@ -63,7 +63,9 @@ Select on which event the trigger should listen for triggering its actions. Some
   - **Value** When not providing a Value, the event applies to *any* value change on the specified variable.
 - **Sheet Opened** The trigger is run when the current sheet is opened.
 - **Time Passed** The trigger is run when a specified time is passed since the opening of the sheet.
-  - **Value** Return a number in seconds that counts as the time window between each trigger, starting from the opening of the sheet. Note that the first second is usually skipped due to the time required for loading up all objects on the sheet.
+  - **Interval** Return a number in seconds that counts as the time window between each trigger, starting from the opening of the sheet. Note that the first second is usually skipped due to the time required for loading up all objects on the sheet.
+  - **Start After** Return a number in seconds which will act as a starting delay of the timer. This setting is available in the *Continuous* mode.
+  - **Duration** Return a number in seconds which will act as a duration window after which the timer will be ignored. This settings is available in the *Continuous* mode.
   - **Once/Continuous** When selecting *Once*, the event only applies to the first passing of the specified time. When selectin *Continuous*, the event applies to each passing of the specified time after another.
 
 ### Actions
@@ -97,7 +99,7 @@ This action starts a reload of the current app. The reload is started instantly.
 - **Close on success** When selected, the reload feedback will be closed instantly on reload success. This enables chaining multiple actions after reloading the app.
 
 #### Start Reload Task
-This action starts the specified reload task. When the task is already running, a message will show telling the user. You can pick from a list of available tasks in the current server environment. This functionality allows for starting reload tasks outside of the QMC.
+This action starts the specified reload task from the QMC. When the task is already running, a message will show telling the user. You can pick from a list of available tasks in the current server environment. This functionality allows for starting reload tasks outside of the QMC.
 - **Display progress** When selecting *Enforced*, the user cannot close the modal untill the task execution is done. When selecting *Optional*, the user can close the modal before the task execution is done.
 - **Skip task confirmation** When selected, the task will be started instantly.
 - **Close on success** When selected, the task feedback will be closed instantly on task success. In combination with *Enforced* progress display and *Skip task confirmation* this enables chaining multiple task executions with actions.
@@ -112,6 +114,9 @@ Note that the following requirements apply:
 
 #### Apply Theme
 This action sets the current Qlik Sense visual theme to the specified theme. You can pick from a list of available themes in the current app. This functionality allows for theme-switching for use cases like font-scaling, different color tones, etcetera.
+
+#### Log to Console
+This action logs the result of the provided expression to the browser's console. This functionality is provided for debugging purposes.
 
 ### Navigation
 After all triggered actions are successfully handled, a navigation action may kick in to move the user to a different location. The following navigation options are available:
