@@ -17,11 +17,28 @@ define([
 ], function( _, util, emergoEvents, emergoActions, qext ) {
 
 	/**
+	 * Define a subset of the events definition
+	 *
+	 * @type {Object}
+	 */
+	var eventsDefinition = (function(){
+		var def = {}, i;
+
+		for (i in emergoEvents.eventsDefinition) {
+			if (emergoEvents.eventsDefinition.hasOwnProperty(i) && "enabled" !== i) {
+				def[i] = emergoEvents.eventsDefinition[i];
+			}
+		}
+
+		return def;
+	})(),
+
+	/**
 	 * Holds the settings definition of the triggers sub-panel
 	 * 
 	 * @type {Object}
 	 */
-	var triggers = {
+	triggers = {
 		label: "Triggers",
 		addTranslation: "Add Trigger",
 		type: "array",
@@ -56,7 +73,7 @@ define([
 			event: {
 				label: "Event listener",
 				type: "items",
-				items: emergoEvents.eventsDefinition
+				items: eventsDefinition
 			},
 			actions: {
 				label: "Actions",
