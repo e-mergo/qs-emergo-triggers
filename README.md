@@ -52,7 +52,7 @@ Select on which event the trigger should listen for triggering its actions. Some
   - **Field** When not providing a Field value, the event applies to *any* field's selection.
   - **Value** When not providing a Value, the event applies to *any* selection on the specified field. Separate multiple values with a `;`.
   - **Once/Continuous** When selecting *Once*, the event only applies to the first selection on the specified field. When selectin *Continuous*, the event applies to each selection on the specified field.
-  - **Many/Exact** When selecting *Many*, the event applies when the specified values are selected, possibly among others. When selecting *Exact*, the event applies only when exactly the specified values are selected.
+  - **Fuzzy/Exact** When selecting *Fuzzy* the event applies when the specified values are selected, regardless of other values selected in the field. When selecting *Exact* the event applies only when exactly the specified values are selected.
 - **Field Cleared** The trigger is run when a field selection is cleared.
   - **Field** When not providing a Field value, the event applies to *all* fields being cleared, meaning when there are no longer any active selections.
   - **Value** When providing a Field and Value, the event applies to clearing the specified value on the specified field.
@@ -69,7 +69,11 @@ Select on which event the trigger should listen for triggering its actions. Some
   - **Once/Continuous** When selecting *Once*, the event only applies to the first passing of the specified time. When selectin *Continuous*, the event applies to each passing of the specified time after another.
 
 ### Actions
-Listening for an event may trigger one or multiple sequenced actions. The list of actions contains all the current ones present in the extensions provided with the *Qlik Dashboard bundle* shipped with Qlik Sense, and some new ones as well:
+Listening for an event may trigger one or multiple sequenced actions. The list of actions contains all the current ones present in the extensions provided with the *Qlik Dashboard bundle* shipped with Qlik Sense, and some new ones as well.
+
+When providing values in an expression, be aware that the setting will first be evaluated before use in the extension. So when providing plain values, make sure to define them *without* a leading `=` or as explicit text surrounded by single quotes. This does apply to settings for field names as well.
+
+The following actions are available:
 - **Apply Bookmark** You can pick from a list of available bookmarks in the current app.
 - **Select Field Value** You can define both the field and the value as a result from an expression. Also, either decide to replace current selections, or add/subtract the selected value in *Toggle* mode. Separate multiple values with a `;`.
 - **Clear Field Selection** When not defining the field, all fields will be cleared.
@@ -89,7 +93,7 @@ This action selects the given field's value that is adjacent to the current sele
 #### Select Pareto Values
 This action selects the given field's values that make up the defined pareto set for the given measure expression. You can decide whether or not to include the threshold value of the pareto set. This functionality is native to QlikView, but is not yet implemented in Qlik Sense.
 - **Field** The dimension field on which to apply the pareto selection.
-- **Value** The measure definition for which to determine the pareto set. The expression should be defined *without* a leading `=`.
+- **Value** The measure definition for which to determine the pareto set. Like all action expressions, the setting will first be evaluated before use in the extension. So when providing plain values, make sure to define them *without* a leading `=` or as explicit text surrounded by single quotes.
 - **Threshold** The size of the pareto set in percentages. The size represents the set of dimension field values that make up the given percentage of the total value of the measure expression. These are the values that will be selected.
 - **Include threshold** Whether the last field that is associated with the pareto set should be selected or not, as it may add to a larger percentage set than the defined threshold value.
 
@@ -140,11 +144,18 @@ Requests for additional features can be posted in the extension's GitHub reposit
 
 ## Changelog
 
+#### 1.2.20200731
+- Added detection of invalid field names in actions
+- Fixed selection of stories for _Start Story_ navigation action
+- Fixed enabling/disabling of individual actions
+- Fixed use of translated labels for settings where possible
+- Fixed logic for the _Open Documentation_ button
+
 #### 1.1.20200713
-- Added Start After and Duration settings for the Time Passed event
-- Added the Log to Console action
-- Fixed the execution of triggers for the Time Passed event to run in parallel
-- Fixed selection of Dual values for the Select Adjacent Value action
+- Added _Start After_ and _Duration_ settings for the _Time Passed_ event
+- Added the _Log to Console_ action
+- Fixed the execution of triggers for the _Time Passed_ event to run in parallel
+- Fixed selection of Dual values for the _Select Adjacent Value_ action
 
 #### 1.0.20200623
 - Updated docs files
