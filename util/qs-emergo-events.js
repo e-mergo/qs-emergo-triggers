@@ -60,6 +60,20 @@ define([
 		showField: true,
 		showValue: true,
 		showState: true,
+		eitherOrLabel: function( item ) {
+			var label;
+
+			// When values are not defined, use Once/Continuous
+			if (item.field && (! item.value || ! item.value.length)) {
+				label = "Occurence frequency";
+
+			// When values are defined, use Many/Exact
+			} else {
+				label = "Match type";
+			}
+
+			return label;
+		},
 		eitherOrOptions: function( item ) {
 			var options;
 
@@ -73,10 +87,10 @@ define([
 					value: true
 				}];
 
-			// When values are defined, use Many/Exact
+			// When values are defined, use Fuzzy/Exact
 			} else {
 				options = [{
-					label: "Many",
+					label: "Fuzzy",
 					value: false,
 				}, {
 					label: "Exact",
@@ -92,6 +106,7 @@ define([
 		showField: true,
 		showValue: true,
 		showState: true,
+		eitherOrLabel: "Which field?",
 		eitherOrOptions: [{
 			label: "This",
 			value: false,
@@ -120,6 +135,7 @@ define([
 		value: "registerTimer",
 		valueLabel: "Interval (seconds)",
 		showValue: true,
+		eitherOrLabel: "Occurence frequency",
 		eitherOrOptions: [{
 			label: "Once",
 			value: false,
@@ -1147,6 +1163,15 @@ define([
 			}
 		},
 		eitherOrOptions: {
+			label: function( item ) {
+				var label = getProperty(item, "eitherOrLabel") || "";
+
+				if ("function" === typeof label) {
+					label = label(item);
+				}
+
+				return label;
+			},
 			ref: "eitherOr",
 			type: "boolean",
 			component: "buttongroup",
