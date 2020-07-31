@@ -1,7 +1,7 @@
 ---
 Qlik Sense Visualization Extension
 Name: E-mergo Triggers
-Version: 1.1.20200713
+Version: 1.2.20200731
 QEXT: qs-emergo-triggers.qext
 ---
 
