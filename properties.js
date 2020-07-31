@@ -110,16 +110,16 @@ define([
 				items: emergoActions.navigationDefinition
 			},
 			enabled: {
-				label: "Status",
+				translation: "Common.Enabled",
 				ref: "enabled",
 				type: "boolean",
 				component: "switch",
 				defaultValue: true,
 				options: [{
-					label: "Enabled",
+					translation: "properties.on",
 					value: true,
 				}, {
-					label: "Disabled",
+					translation: "properties.off",
 					value: false
 				}]
 			}
