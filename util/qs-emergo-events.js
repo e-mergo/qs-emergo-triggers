@@ -1,25 +1,28 @@
 /**
  * E-mergo Events Utility Library
  *
- * @version 20200725
+ * @version 20200731
  * @author Laurens Offereins <https://github.com/lmoffereins>
  *
  * @param  {Object} qlik              Qlik API
  * @param  {Object} qvangular         Qlik's Angular implementation
  * @param  {Object} _                 Underscore library
  * @param  {Object} $q                Angular's promise library
+ * @param  {Object} translator        Qlik's translation API
  * @return {Object}                   E-mergo Events API
  */
 define([
 	"qlik",
 	"qvangular",
 	"underscore",
-	"ng!$q"
+	"ng!$q",
+	"translator"
 ], function(
 	qlik,
 	qvangular,
 	_,
-	$q
+	$q,
+	translator
 ) {
 
 	/**
@@ -1007,7 +1010,7 @@ define([
 			options: eventOptions
 		},
 		field: {
-			label: "Field",
+			translation: "Common.Field",
 			type: "string",
 			expression: "optional", // How is this parsed?
 			ref: "field",
@@ -1016,7 +1019,7 @@ define([
 			}
 		},
 		variable: {
-			label: "Variable",
+			translation: "Common.Variable",
 			type: "string",
 			ref: "variable",
 			component: "dropdown",
@@ -1044,7 +1047,7 @@ define([
 			}
 		},
 		theme: {
-			label: "Theme",
+			translation: "Embed.Dialog.SetTheme",
 			type: "string",
 			component: "dropdown",
 			ref: "theme",
@@ -1068,7 +1071,7 @@ define([
 		},
 		value: {
 			label: function( item ) {
-				return getProperty(item, "valueLabel") || "Value";
+				return getProperty(item, "valueLabel") || translator.get("ExpressionEditor.Value");
 			},
 			type: "string",
 			expression: "optional",
@@ -1118,7 +1121,7 @@ define([
 			}
 		},
 		state: {
-			label: "State",
+			translation: "AlternateState.SelectState",
 			type: "string",
 			component: "dropdown",
 			ref: "state",
@@ -1127,10 +1130,10 @@ define([
 
 				return [{
 					value: "",
-					label: "<inherited>"
+					translation: "AlternateState.InheritedState"
 				}, {
 					value: "$",
-					label: "<default-state>"
+					translation: "AlternateState.DefaultState"
 				}].concat(states.map( function( a ) {
 					return {
 						value: a,
@@ -1207,18 +1210,18 @@ define([
 			}
 		},
 		enabled: {
-			// label: "Status",
+			translation: "Common.Enabled",
 			ref: "enabled",
 			type: "boolean",
 			component: "switch",
-			defaultValue: true,
 			options: [{
-				label: "Enabled",
+				translation: "properties.on",
 				value: true,
 			}, {
-				label: "Disabled",
+				translation: "properties.off",
 				value: false
-			}]
+			}],
+			defaultValue: true
 		}
 	},
 
