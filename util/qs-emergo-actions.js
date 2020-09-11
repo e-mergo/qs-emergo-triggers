@@ -1,7 +1,7 @@
 /**
  * E-mergo Actions Utility Library
  *
- * @version 20200731
+ * @version 20200911
  * @author Laurens Offereins <https://github.com/lmoffereins>
  *
  * @param  {Object} qlik       Qlik's core API
@@ -208,6 +208,9 @@ define([
 		value: "logToConsole",
 		valueLabel: "Expression",
 		showValue: true
+	}, {
+		label: "Request confirmation",
+		value: "requestConfirmation"
 	// }, {
 	// 	label: "Set Language",
 	// 	value: "setLanguage",
@@ -261,7 +264,9 @@ define([
 
 		// Define the default callback
 		if ("undefined" === typeof errorCallback) {
-			errorCallback = _.noop;
+			errorCallback = function() {
+				return false;
+			};
 		}
 
 		// The Promise of field.waitFor does not get resolved nor rejected when
@@ -299,8 +304,6 @@ define([
 	 */
 	applyBookmark = function( item ) {
 		app.bookmark.apply(item.bookmark);
-
-		return $q.resolve();
 	},
 
 	/**
@@ -325,12 +328,11 @@ define([
 			}
 		}
 
+		// Require a field name
 		if (item.field) {
 			return getField(item, state, function( field ) {
 				return field[item.eitherOr ? "toggleSelect" : "selectValues"](item.eitherOr ? String(values[0]) : values, false);
 			});
-		} else {
-			return $q.resolve();
 		}
 	},
 
@@ -346,10 +348,13 @@ define([
 	clearSelection = function( item, context ) {
 		var state = getAlternateState(item, context);
 
+		// Require a field name for a single field
 		if (item.field) {
 			return getField(item, state, function( field ) {
 				return field[item.eitherOr ? "clearOther" : "clear"]();
 			});
+
+		// Apply to all selected fields
 		} else {
 			return app.clearAll(false, state);
 		}
@@ -377,10 +382,13 @@ define([
 	lockField = function( item, context ) {
 		var state = getAlternateState(item, context);
 
+		// Require a field name for a single field
 		if (item.field) {
 			return getField(item, state, function( field ) {
 				return field[item.eitherOr ? "unlock" : "lock"]();
 			});
+
+		// Apply to all selected fields
 		} else {
 			return app[item.eitherOr ? "unlockAll" : "lockAll"](state);
 		}
@@ -411,6 +419,7 @@ define([
 			}]
 		};
 
+		// Require a field name
 		if (item.field) {
 
 			// Make sure the field exists
@@ -464,10 +473,14 @@ define([
 					});
 				});
 			}, function() {
-				dfd.resolve();
+
+				// Stop the action chain
+				dfd.resolve(false);
 			});
 		} else {
-			dfd.resolve();
+
+			// Silently continue the action chain
+			dfd.resolve(true);
 		}
 
 		return dfd.promise;
@@ -483,12 +496,11 @@ define([
 	selectAll = function( item, context ) {
 		var state = getAlternateState(item, context);
 
+		// Require a field name
 		if (item.field) {
 			return getField(item, state, function( field ) {
 				return field.selectAll();
 			});
-		} else {
-			return $q.resolve();
 		}
 	},
 
@@ -502,12 +514,11 @@ define([
 	selectExcluded = function( item, context ) {
 		var state = getAlternateState(item, context);
 
+		// Require a field name
 		if (item.field) {
 			return getField(item, state, function( field ) {
 				return field.selectExcluded();
 			});
-		} else {
-			return $q.resolve();
 		}
 	},
 
@@ -521,12 +532,11 @@ define([
 	selectPossible = function( item, context ) {
 		var state = getAlternateState(item, context);
 
+		// Require a field name
 		if (item.field) {
 			return getField(item, state, function( field ) {
 				return field.selectPossible();
 			});
-		} else {
-			return $q.resolve();
 		}
 	},
 
@@ -540,12 +550,11 @@ define([
 	selectAlternative = function( item, context ) {
 		var state = getAlternateState(item, context);
 
+		// Require a field name
 		if (item.field) {
 			return getField(item, state, function( field ) {
 				return field.selectAlternative();
 			});
-		} else {
-			return $q.resolve();
 		}
 	},
 
@@ -631,13 +640,14 @@ define([
 					});
 				});
 			}, function() {
-				dfd.resolve();
+
+				// Stop the action chain
+				dfd.resolve(false);
 			});
 		} else {
-			showActionFeedback({
-				title: "Pareto selection error",
-				message: "The settings for this action are not properly defined."
-			}).closed.then(dfd.resolve);
+
+			// Silently continue the action chain
+			dfd.resolve(true);
 		}
 
 		return dfd.promise;
@@ -835,9 +845,15 @@ define([
 						hideCancelButton: true,
 						hideOkButton: false
 					}
-				}).closed.then(dfd.reject);
+				}).closed.then( function() {
+
+					// Stop the action chain
+					dfd.resolve(false);
+				});
 			} else {
-				dfd.resolve();
+
+				// Continue the action chain
+				dfd.resolve(true);
 			}
 		});
 
@@ -1006,7 +1022,6 @@ define([
 							return;
 
 						// Execution is done
-						// $interval.cancel(progressInterval);
 						clearInterval(progressInterval);
 
 						$scope.input.hideOkButton = false;
@@ -1028,7 +1043,6 @@ define([
 					executionResultFailed = function( error ) {
 						var message = error.details ? error.details[error.details.length - 1].message : error.message;
 
-						// $interval.cancel(progressInterval);
 						clearInterval(progressInterval);
 
 						$scope.input.title = "Reload task failed";
@@ -1057,7 +1071,6 @@ define([
 					if ($scope.input.showProgress) {
 
 						// Start progress checker. Update the task's elapsed time each second
-						// progressInterval = $interval(progressIndicator, 1000);
 						progressInterval = setInterval(progressIndicator, 1000);
 					}
 				}],
@@ -1077,14 +1090,13 @@ define([
 			dialog.closed.then( function( confirmed ) {
 
 				// Make sure the interval is stopped
-				// progressInterval && qvangular.getService("$interval").cancel(progressInterval);
 				progressInterval && clearInterval(progressInterval);
 
 				// Download script log when requested
 				if (! confirmed) {
 
 					// Stop the action chain
-					actionDfd.reject();
+					actionDfd.resolve(false);
 
 					// Try to download script log
 					if (dialog.error && dialog.error.fileReferenceID) {
@@ -1109,9 +1121,7 @@ define([
 						});
 					}
 				} else {
-
-					// Stop the action chain
-					actionDfd.resolve();
+					actionDfd.resolve(true);
 				}
 			});
 
@@ -1168,7 +1178,9 @@ define([
 				if (confirmed) {
 					startTask(task);
 				} else {
-					actionDfd.resolve();
+
+					// Stop the action chain
+					actionDfd.resolve(false);
 				}
 			});
 
@@ -1245,6 +1257,31 @@ define([
 	},
 
 	/**
+	 * Display a confirmation dialog
+	 *
+	 * @param  {Object}  item Action
+	 * @return {Promise} Action confirmed or cancelled
+	 */
+	requestConfirmation = function( item ) {
+		var dfd = $q.defer(),
+
+		// Contstruct dialog
+		dialog = showActionFeedback({
+			title: item.modalTitle,
+			message: item.modalContent || ( item.modalTitle ? "" : "Are you sure?" ),
+			okLabel: item.modalOkLabel || translator.get( "Common.OK" ),
+			cancelLabel: item.modalCancelLabel,
+			hideCancelButton: ! item.modalCancelLabel
+		});
+
+		// Resolve the promise on dialog close. Cancelling the modal will
+		// short-circuit the action chain.
+		dialog.closed.then(dfd.resolve);
+
+		return dfd.promise;
+	},
+
+	/**
 	 * Set the language
 	 *
 	 * @inactive Should be used _before_ opening an app.
@@ -1287,7 +1324,8 @@ define([
 		applyTheme: applyTheme,
 
 		// Other
-		logToConsole: logToConsole
+		logToConsole: logToConsole,
+		requestConfirmation: requestConfirmation
 	},
 
 	/**
@@ -1557,8 +1595,14 @@ define([
 		return (items.actions || items).map( function( item ) {
 			return doOne.bind(this, item, context);
 		}).reduce( function( promise, fn ) {
-			return promise.then(fn).catch(console.error);
-		}, $q.resolve());
+			return promise.then( function( retval ) {
+
+				// Only continue when the previous action did not return false
+				if (false !== retval) {
+					return fn();
+				}
+			});
+		}, $q.resolve()).catch(console.error);
 	},
 
 	/**
@@ -2019,6 +2063,46 @@ define([
 			defaultValue: true,
 			show: function( item ) {
 				return item.action === "selectPareto";
+			}
+		},
+		modalTitle: {
+			label: "Modal title",
+			type: "string",
+			expression: "optional",
+			ref: "modalTitle",
+			defaultValue: "Are you sure?",
+			show: function( item ) {
+				return item.action === "requestConfirmation";
+			}
+		},
+		modalContent: {
+			label: "Modal content",
+			type: "string",
+			expression: "optional",
+			ref: "modalContent",
+			defaultValue: "",
+			show: function( item ) {
+				return item.action === "requestConfirmation";
+			}
+		},
+		modalCancelLabel: {
+			label: "Cancel label",
+			type: "string",
+			expression: "optional",
+			ref: "modalCancelLabel",
+			defaultValue: translator.get( "Common.Cancel" ),
+			show: function( item ) {
+				return item.action === "requestConfirmation";
+			}
+		},
+		modalOkLabel: {
+			label: "Confirm label",
+			type: "string",
+			expression: "optional",
+			ref: "modalOkLabel",
+			defaultValue: translator.get( "Common.OK" ),
+			show: function( item ) {
+				return item.action === "requestConfirmation";
 			}
 		},
 		enabled: {
