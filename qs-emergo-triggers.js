@@ -333,10 +333,12 @@ define([
 			});
 
 			// Act when the object's state is updated
-			this.$scope.$watch("layout.qStateName", function() {
+			this.$scope.$watch("layout.qStateName", function( newValue, oldValue ) {
 
-				// Completely reset all event listeners
-				context.$scope.resetEventListeners();
+				// On change, do a full reset of all event listeners
+				if (newValue !== oldValue) {
+					context.$scope.resetEventListeners();
+				}
 			});
 
 			// Run events mounter
