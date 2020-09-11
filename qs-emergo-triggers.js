@@ -121,18 +121,18 @@ define([
 						}
 
 						// Mount event listener
-						if (event && event.mount) {
+						if (event && event.mount && trigger.enabled) {
 							event.mount.call($scope, function() {
 
 								// Get the fresh trigger data from the layout at this point. Various parts of the
 								// trigger data could have been re-evaluated in between mounting and triggering.
-								var a = $scope.layout.props.triggers.find( function( i ) {
+								var item = $scope.layout.props.triggers.find( function( i ) {
 									return i.cId === trigger.cId;
 								});
 
 								// Run trigger when it is enabled and considered active
-								if (a && a.enabled && isTriggerActive(a)) {
-									$scope.do(a);
+								if (item && isTriggerActive(item)) {
+									$scope.do(item);
 								}
 							}).then(dfd.resolve).catch(console.error);
 						} else {
@@ -291,8 +291,10 @@ define([
 		});
 
 		return {
-			toAdd: toAdd,
-			toRemove: toRemove
+			to: {
+				add: toAdd,
+				remove: toRemove
+			}
 		};
 	};
 
@@ -317,18 +319,18 @@ define([
 
 			// Act when the list of triggers is updated
 			this.$scope.$watchCollection("layout.props.triggers", function( newValue, oldValue ) {
-				var changedTriggers = getChangedTriggers(newValue, oldValue);
+				var triggers = getChangedTriggers(newValue, oldValue);
 
 				// Bail when no changes are noticed
-				if (_.isEmpty(changedTriggers.toAdd) && _.isEmpty(changedTriggers.toRemove)) {
+				if (_.isEmpty(triggers.to.add) && _.isEmpty(triggers.to.remove)) {
 					return;
 				}
 
 				// Tear down the existing event listeners
-				context.$scope.destroyEventListeners(changedTriggers.toRemove).then( function() {
+				context.$scope.destroyEventListeners(triggers.to.remove).then( function() {
 
 					// Setup the event listeners
-					context.$scope.setupEventListeners(changedTriggers.toAdd);
+					context.$scope.setupEventListeners(triggers.to.add);
 				});
 			});
 
