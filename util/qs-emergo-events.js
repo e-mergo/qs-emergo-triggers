@@ -287,9 +287,10 @@ define([
 		 * @return {Boolean} Is the field selected?
 		 */
 		withFieldAnySelection: function( prev, obj, item ) {
+			var sumOfCounts = prev.selectedCount + obj.selectedCount;
 
 			// Previous selection does not exist (or update continuously), but the new selection is different
-			return (! prev.selected.length || item.eitherOr) && prev.selected !== obj.selected;
+			return (! prev.selectedCount || item.eitherOr) && prev.selected !== obj.selected && 0 !== sumOfCounts;
 		},
 
 		/**
@@ -326,7 +327,8 @@ define([
 		 * @type {Object}
 		 */
 		def = {
-			selected: {}
+			selected: {},
+			selectedCount: {}
 		},
 
 		// Holds a reference to the object id of the session
@@ -337,6 +339,7 @@ define([
 			// How many values are selected?
 			if (_.isEmpty(getListOfValues(item))) {
 				actionType = "withFieldAnySelection";
+				def.selectedCount.qValueExpression = "=GetSelectedCount(" + item.field + ", '', '" + state + "')";
 				def.selected.qStringExpression = "=GetFieldSelections(" + item.field + ", '|', 10000, '" + state + "')";
 
 			// Which values are selected?
@@ -359,7 +362,7 @@ define([
 			 * @return {Promise} Event is mounted
 			 */
 			mount: function( triggerActions ) {
-				var prev = { selected: "" };
+				var prev = { selected: "", selectedCount: 0 };
 
 				// Start session object. The object is created once, but its callback
 				// will be run everytime the object's hypercube is refreshed.
@@ -447,7 +450,7 @@ define([
 			    other = areOtherFieldsSelected(obj.other, item.field);
 
 			// Previous selection exists with other selections, but current selection exists without other selections
-			return parseInt(prev.selected) && prevOther && parseInt(obj.selected) && ! other;
+			return prev.selected && prevOther && obj.selected && ! other;
 		},
 
 		/**
@@ -460,7 +463,7 @@ define([
 		withFieldCleared: function( prev, obj ) {
 
 			// Previous selection exists, but the current one does not
-			return parseInt(prev.selected) && ! parseInt(obj.selected);
+			return prev.selected && ! obj.selected;
 		},
 
 		/**
@@ -512,7 +515,7 @@ define([
 			// How many values are selected?
 			if (item.eitherOr) {
 				actionType = "withFieldOtherFieldsCleared";
-				def.selected.qStringExpression = "=GetSelectedCount(" + item.field + ", '', '" + state + "')";
+				def.selected.qValueExpression = "=GetSelectedCount(" + item.field + ", '', '" + state + "')";
 
 				// Consider other fields
 				def.other.qStringExpression = "=GetCurrentSelections('|', ':', ', ', '', '" +  state + "')";
@@ -521,7 +524,7 @@ define([
 				// How many values are selected?
 				if (_.isEmpty(getListOfValues(item))) {
 					actionType = "withFieldCleared";
-					def.selected.qStringExpression = "=GetSelectedCount(" + item.field + ", '', '" + state + "')";
+					def.selected.qValueExpression = "=GetSelectedCount(" + item.field + ", '', '" + state + "')";
 
 				// Which values are selected?
 				} else {
