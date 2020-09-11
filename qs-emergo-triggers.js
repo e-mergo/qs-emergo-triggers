@@ -238,7 +238,7 @@ define([
 	 *
 	 * @type {Array}
 	 */
-	monitoredEventProps = ["event", "field", "value", "state", "eitherOr"],
+	monitoredEventProps = ["event", "field", "value", "state", "eitherOr", "enabled"],
 
 	/**
 	 * Determine which triggers should be added or removed
