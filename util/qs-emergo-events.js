@@ -1,7 +1,7 @@
 /**
  * E-mergo Events Utility Library
  *
- * @version 20200731
+ * @version 20200912
  * @author Laurens Offereins <https://github.com/lmoffereins>
  *
  * @param  {Object} qlik              Qlik API
