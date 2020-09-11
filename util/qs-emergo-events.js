@@ -256,7 +256,7 @@ define([
 	 * @return {String} Alternate state
 	 */
 	getAlternateState = function( item, context ) {
-		return (! item.state || ! item.state.length) ? (context && context.layout && context.layout.qStateName) : item.state;
+		return (! item.state || ! item.state.length) ? (context && context.layout && context.layout.qStateName || "$") : item.state;
 	},
 
 	/**
