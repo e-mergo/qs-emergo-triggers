@@ -147,23 +147,29 @@ Requests for additional features can be posted in the extension's GitHub reposit
 
 ## Changelog
 
+#### 1.3.20200918 - QS Sept 2020
+- Added the _Request confirmation_ action.
+- Fixed firing of the _Field Selected_ event when 0 values are selected.
+- Fixed accidental double registration of event listeners.
+- Fixed registration of event triggers when the trigger is enabled/disabled.
+
 #### 1.2.20200731
-- Added detection of invalid field names in actions
-- Fixed selection of stories for _Start Story_ navigation action
-- Fixed enabling/disabling of individual actions
-- Fixed use of translated labels for settings where possible
-- Fixed logic for the _Open Documentation_ button
+- Added detection of invalid field names in actions.
+- Fixed selection of stories for _Start Story_ navigation action.
+- Fixed enabling/disabling of individual actions.
+- Fixed use of translated labels for settings where possible.
+- Fixed logic for the _Open Documentation_ button.
 
 #### 1.1.20200713
-- Added _Start After_ and _Duration_ settings for the _Time Passed_ event
-- Added the _Log to Console_ action
-- Fixed the execution of triggers for the _Time Passed_ event to run in parallel
-- Fixed selection of Dual values for the _Select Adjacent Value_ action
+- Added _Start After_ and _Duration_ settings for the _Time Passed_ event.
+- Added the _Log to Console_ action.
+- Fixed the execution of triggers for the _Time Passed_ event to run in parallel.
+- Fixed selection of Dual values for the _Select Adjacent Value_ action.
 
 #### 1.0.20200623
-- Updated docs files
+- Updated docs files.
 
-#### 1.0.20200622
+#### 1.0.20200622 - QS June 2020
 - Fixed use of deprecated contentApi service.
 
 #### 0.5.20191213
