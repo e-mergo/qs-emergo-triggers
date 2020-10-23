@@ -1,5 +1,6 @@
 {
-	"name": "E-mergo Triggers",
+	"title": "E-mergo Triggers",
+	"name": "Triggers",
 	"type": "visualization",
 	"author": "Laurens Offereins, E-mergo",
 	"version": "1.3.20200918",
