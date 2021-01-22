@@ -83,7 +83,7 @@ define([
 				itemTitleRef: emergoActions.actionItemTitleRef,
 				allowAdd: true,
 				allowRemove: true,
-				allowMove: false, // QS's interface collapses on dragging nested array elements
+				allowMove: true,
 				items: emergoActions.actionsDefinition,
 
 				/**
