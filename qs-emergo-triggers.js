@@ -67,13 +67,13 @@ define([
 		 */
 		$scope.do = function( trigger ) {
 
-			// Run triggers when not editing the sheet
+			// Apply trigger actions when not editing the sheet
 			if (! $scope.object.inEditState()) {
-				emergoActions.doMany(trigger, $scope).then( function() {
+				emergoActions.doMany(trigger, $scope).then( function( done ) {
 
 					// Evaluate navigation settings
-					emergoActions.doNavigation(trigger, $scope);
-				});
+					return done && emergoActions.doNavigation(trigger, $scope);
+				}).catch(console.error);
 			}
 		};
 
