@@ -72,7 +72,7 @@ define([
 				emergoActions.doMany(trigger, $scope).then( function( done ) {
 
 					// Evaluate navigation settings
-					return done && emergoActions.doNavigation(trigger, $scope);
+					return (false !== done) && emergoActions.doNavigation(trigger, $scope);
 				}).catch(console.error);
 			}
 		};
