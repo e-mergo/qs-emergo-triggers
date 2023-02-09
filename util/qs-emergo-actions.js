@@ -1,7 +1,7 @@
 /**
  * E-mergo Actions Utility Library
  *
- * @version 20210122
+ * @version 20230209
  * @author Laurens Offereins <https://github.com/lmoffereins>
  *
  * @param  {Object} qlik       Qlik's core API
@@ -204,6 +204,11 @@ define([
 		value: "applyTheme",
 		showTheme: true
 	}, {
+		label: "Call REST API",
+		value: "callRestApi",
+		showVariable: true,
+		showRestFields: true
+	}, {
 		label: "Log to Console",
 		value: "logToConsole",
 		valueLabel: "Expression",
@@ -253,6 +258,13 @@ define([
 	/**
 	 * Return the item's field
 	 *
+	 * NB. Known bug is that on app reload started in another browser tab does
+	 * not refresh the field socket handle after it is closed on app reload.
+	 * This does not occur when the reload is executed in the same browser tab.
+	 * The issue's origin is that the app's `fieldCache` is apparently not
+	 * cleared in this situation. Using the lower level `getField` method
+	 * instead does not solve the issue of the abstracted 'app.field()' Field API.
+	 *
 	 * @param  {Object} item  Action item
 	 * @param  {Object} state Context state
 	 * @param  {Function} callback Callback to run when the field was found
@@ -269,15 +281,15 @@ define([
 			};
 		}
 
-		// The Promise of field.waitFor does not get resolved nor rejected when
-		// the item.field is not a valid field name in the app. To make sure that
-		// the field can properly be evaluated, we apply a delay before evaluation
-		// to make sure that the API request must have returned any value.
+		// The Promise of field.waitFor does not get resolved or rejected when
+		// requesting an invalid field in the app. To make sure that the field
+		// can properly be evaluated, a delay is applied before evaluation so
+		// that we ensure that the API request must have returned any value.
 		setTimeout(function() {
 			if (! field.field) {
 				showActionFeedback({
 					title: "Invalid field",
-					message: "The field named '" + field.fldname + "' does not exist. Please make sure the relevant expression generates an existing field name."
+					message: "The field named '".concat(item.field, "' does not exist. Please make sure the relevant expression generates an existing field name.")
 				}).closed.then(errorCallback).then(dfd.resolve);
 			} else {
 
@@ -351,7 +363,7 @@ define([
 		// Require a field name for a single field
 		if (item.field) {
 			return getField(item, state, function( field ) {
-				return field[item.eitherOr ? "clearOther" : "clear"]();
+				return field[item.eitherOr ? (field.hasOwnProperty("clearOther") ? "clearOther" : "clearAllButThis") : "clear"]();
 			});
 
 		// Apply to all selected fields
@@ -576,7 +588,7 @@ define([
 				 * Create a cube when the action is run instead of instantly on the item's
 				 * property data (like normal visualizations do using a hypercube). This way,
 				 * there's no constant updating of hypercube data, but only a single fetch.
-				 * The cube is immediately destroyed after it is received.
+				 * The cube's session object is immediately destroyed after it is received.
 				 */
 				app.createCube({
 					qStateName: state,
@@ -693,7 +705,7 @@ define([
 		timeUntill = timeUntill || new Date();
 
 		var timeDiff = (timeUntill - timeStarted) / 1000,
-		    elapsedTime = formatNum(timeDiff / 3600) + ":" + formatNum(timeDiff % 3600 / 60) + ":" + formatNum(timeDiff % 60);
+		    elapsedTime = "".concat(formatNum(timeDiff / 3600), ":", formatNum(timeDiff % 3600 / 60), ":", formatNum(timeDiff % 60));
 
 		return elapsedTime;
 	},
@@ -881,7 +893,7 @@ define([
 			var dialog = showActionFeedback({
 				title: "Reload task error",
 				message: id
-					? "The reload task with id '" + id + "' was not found."
+					? "The reload task with id '".concat(id, "' was not found.")
 					: "The settings for this action are not properly defined."
 			});
 
@@ -899,7 +911,7 @@ define([
 		taskIsRunningDialog = function( task ) {
 			var dialog = showActionFeedback({
 				title: "Reload task",
-				message: "The reload task named '" + task.name + "' is currently running."
+				message: "The reload task named '".concat(task.name, "' is currently running.")
 			});
 
 			dialog.closed.then(actionDfd.resolve);
@@ -918,7 +930,7 @@ define([
 
 			// Check the session execution
 			request({
-				url: "/qrs/executionresult?filter=executionId eq " + sessionId
+				url: "/qrs/executionresult?filter=executionId eq ".concat(sessionId)
 			}).then( function( resp ) {
 
 				// No access
@@ -1026,7 +1038,7 @@ define([
 
 						$scope.input.hideOkButton = false;
 						$scope.input.title = "Reload task executed";
-						$scope.input.message = "The reload task named '" + task.name + "' was successfully executed.";
+						$scope.input.message = "The reload task named '".concat(task.name, "' was successfully executed.");
 
 						// Close on success
 						if (item.taskAutoResolve) {
@@ -1046,7 +1058,7 @@ define([
 						clearInterval(progressInterval);
 
 						$scope.input.title = "Reload task failed";
-						$scope.input.message = "Execution of the reload task named '" + task.name + "' failed with the following message: " + message;
+						$scope.input.message = "Execution of the reload task named '".concat(task.name, "' failed with the following message: ", message);
 						$scope.input.hideOkButton = false;
 
 						// Enable script log download
@@ -1076,7 +1088,7 @@ define([
 				}],
 				template: reloadTmpl,
 				input: {
-					message: "The reload task named '" + task.name + "' was started.",
+					message: "The reload task named '".concat(task.name, "' was started."),
 					title: "Reload task started",
 					showProgress: ! item.taskDisplayProgress || "optional" === item.taskDisplayProgress,
 					hideCancelButton: true,
@@ -1103,7 +1115,7 @@ define([
 
 						// Identify the script file id
 						request({
-							url: "/qrs/reloadtask/" + task.id + "/scriptlog?fileReferenceId=" + dialog.error.fileReferenceID
+							url: "/qrs/reloadtask/".concat(task.id, "/scriptlog?fileReferenceId=", dialog.error.fileReferenceID)
 						}).then( function( resp ) {
 
 							/**
@@ -1112,7 +1124,7 @@ define([
 							 * @link https://community.qlik.com/t5/Qlik-Sense-Integration/Download-LOG-file-using-QRS-API/m-p/1567000
 							 */
 							request({
-								url: "/qrs/download/reloadtask/" + resp.data.value + "/" + task.name + ".log"
+								url: "/qrs/download/reloadtask/".concat(resp.data.value, "/", task.name, ".log")
 							}).then( function( resp ) {
 
 								// Trigger download for the script log as file
@@ -1138,7 +1150,7 @@ define([
 		taskIsNotStartedDialog = function( task, error ) {
 			var dialog = showActionFeedback({
 				title: "Reload task error",
-				message: "Something went wrong when trying to start the reload task named '" + task.name + "': " + error.data
+				message: "Something went wrong when trying to start the reload task named '".concat(task.name, "': ", error.data)
 			});
 
 			dialog.closed.then(actionDfd.resolve);
@@ -1167,7 +1179,7 @@ define([
 			} else {
 				dialog = showActionFeedback({
 					title: "Reload task",
-					message: "You are going to start the reload task named '" + task.name + "'.",
+					message: "You are going to start the reload task named '".concat(task.name, "'."),
 					okLabel: "Start task",
 					hideCancelButton: false
 				});
@@ -1196,7 +1208,7 @@ define([
 		startTask = function( task ) {
 			request({
 				method: "POST",
-				url: "/qrs/task/" + task.id + "/start/synchronous"
+				url: "/qrs/task/".concat(task.id, "/start/synchronous")
 			}).then( function openTaskIsStartedDialog( resp ) {
 				taskIsStartedDialog(task, resp.data.value);
 			}).catch( function openTaskIsNotStartedDialog( error ) {
@@ -1207,13 +1219,13 @@ define([
 		// Find the reload task. It might not be available (for the user or it was deleted)
 		if (item.task) {
 			request({
-				url: "/qrs/reloadtask/" + item.task
+				url: "/qrs/reloadtask/".concat(item.task)
 			}).then( function findTaskIsRunning( resp ) {
 				var task = resp.data;
 
 				// Find whether the task is already running
 				request({
-					url: "/qrs/executionsession?filter=reloadTask.id eq " + task.id
+					url: "/qrs/executionsession?filter=reloadTask.id eq ".concat(task.id)
 				}).then( function openConfirmReloadTaskDialog( resp ) {
 					var dialog;
 
@@ -1247,6 +1259,72 @@ define([
 	},
 
 	/**
+	 * Send a request to a REST API
+	 *
+	 * @param  {Object}  item Action
+	 * @return {Promise}      Action done
+	 */
+	callRestApi = function( item ) {
+		var dfd = $q.defer();
+
+		// Clear variable beforehand
+		if (item.variable) {
+			setVariable({
+				variable: item.variable,
+				value: ""
+			}).then(dfd.resolve);
+		} else {
+			dfd.resolve();
+		}
+
+		return dfd.promise.then( function() {
+			return request({
+				url: item.restApiLocation,
+				method: item.restApiMethod,
+				headers: item.restApiHeaders.reduce(function( obj, item ) {
+					obj[item.name] = item.value;
+					return obj;
+				}, {}),
+				data: item.restApiBody.length ? JSON.parse(item.restApiBody) : null
+			}).then( function( response ) {
+
+				// Store response in a variable
+				if (response.data && item.variable) {
+					return setVariable({
+						variable: item.variable,
+						/**
+						 * Escape single quotes by quoting twice
+						 *
+						 * @see https://community.qlik.com/t5/Design/Escape-sequences/ba-p/1469770
+						 */
+						value: JSON.stringify(response.data, null, "  ").replace("'", "''")
+					});
+				}
+			}).catch( function( error ) {
+				var dfd = $q.defer(), dialog;
+
+				// Log error for debugging the action
+				console.error(error);
+
+				// Construct dialog
+				var dialog = showActionFeedback({
+					title: "Error from ".concat(item.restApiLocation),
+					message: error.response.data ? error.response.data.error.message : (error.response.statusText || error.message),
+					hideCancelButton: true
+				});
+
+				// Resolve action on close. Confirming the modal will
+				// end the action chain because this action failed.
+				dialog.closed.then( function() {
+					dfd.resolve(false);
+				});
+
+				return dfd.promise;
+			});
+		});
+	},
+
+	/**
 	 * Log a value to the console
 	 *
 	 * @param  {Object}  item Action
@@ -1272,7 +1350,7 @@ define([
 	requestConfirmation = function( item ) {
 		var dfd = $q.defer();
 
-		// Contstruct dialog
+		// Construct dialog
 		requestConfirmationDialog = showActionFeedback({
 			title: item.modalTitle,
 			message: item.modalContent || ( item.modalTitle ? "" : "Are you sure?" ),
@@ -1336,6 +1414,7 @@ define([
 		applyTheme: applyTheme,
 
 		// Other
+		callRestApi: callRestApi,
 		logToConsole: logToConsole,
 		requestConfirmation: requestConfirmation
 	},
@@ -1376,7 +1455,7 @@ define([
 
 		// Signal disabled actions
 		if (! item.enabled) {
-			title = "// " + title;
+			title = "// ".concat(title);
 		}
 
 		return title;
@@ -1511,15 +1590,16 @@ define([
 	 * @return {Void}
 	 */
 	goToAppSheet = function( item ) {
-		var config = app.global.session.options,
-		    url;
+		var config = app.global.session.options, url;
 
 		if (item.app) {
-		    url = (config.isSecure ? "https://" : "http://") + config.host
-		    	+ (config.port ? ":" + config.port : "")
-		    	+ (config.prefix ? "/" + config.prefix : "")
-		    	+ "/sense/app/" + encodeURIComponent(item.app)
-		    	+ (item.sheet ? "/sheet/" + item.sheet + "/state/analysis" : "");
+			url = (config.isSecure ? "https://" : "http://").concat(
+				config.host,
+				(config.port ? ":".concat(config.port) : ""),
+				(config.prefix ? "/".concat(config.prefix) : ""),
+				"/sense/app/".concat(encodeURIComponent(item.app)),
+				(item.sheet ? "/sheet/".concat(item.sheet, "/state/analysis") : "")
+			);
 
 			window.open(url, item.newTab ? "_blank" : "_self");
 		}
@@ -1589,29 +1669,37 @@ define([
 	 * @return {Promise}        Action done
 	 */
 	doOne = function( item, context ) {
-		return item.enabled !== false
+		return false !== item.enabled
 			? "function" === typeof actions[item.action]
 				? actions[item.action](item, context)
-				: $q.reject("E-mergo actions: '" + item.action + "' action handler not found", item)
+				: $q.reject("E-mergo actions: '".concat(item.action, "' action handler not found"), item)
 			: $q.resolve();
 	},
 
 	/**
 	 * Run multiple actions sequentially
 	 *
-	 * @param  {Array}  items   Multiple registered actions
-	 * @param  {Object} context Action context
-	 * @return {Promise}        Actions done. False indicates the action chain was broken.
+	 * @param  {Array|Function} items   Multiple registered actions or callback to get actions. Provide a
+	 *                                  callback to utilize fresh updates on properties from `layout`.
+	 * @param  {Object}         context Action context
+	 * @return {Promise}                Actions done. False indicates the action chain was broken.
 	 */
 	doMany = function( items, context ) {
-		return (items.actions || items).map( function( item ) {
-			return doOne.bind(this, item, context);
-		}).reduce( function( promise, fn ) {
+		/**
+		 * Return the iterable actions
+		 *
+		 * @return {Array} Action items
+		 */
+		function getActions() {
+			return "function" === typeof items ? items().actions : (items.actions || items);
+		};
+
+		return getActions().reduce( function( promise, item, ix ) {
 			return promise.then( function( retval ) {
 
 				// Only continue when the previous action did not return false. Also no dialog should be active.
 				if (false !== retval && null === requestConfirmationDialog) {
-					return fn();
+					return doOne(getActions()[ix], context);
 				} else {
 					return false;
 				}
@@ -1622,11 +1710,14 @@ define([
 	/**
 	 * Run the navigation action
 	 *
-	 * @param  {Object} nav     Navigation settings
-	 * @param  {Object} context Navigation context
+	 * @param  {Object|Function} nav     Navigation settings or callback to get navigation settings. Provide
+	 *                                   a callback to utilize fresh updates on properties from `layout`.
+	 * @param  {Object}          context Navigation context
 	 * @return {Void}
 	 */
 	doNavigation = function( nav, context ) {
+		nav = "function" === typeof nav ? nav() : nav;
+
 		nav.navigation && (nav = nav.navigation);
 		nav.enabled && "function" === typeof navigation[nav.action] && navigation[nav.action](nav);
 	},
@@ -1808,6 +1899,84 @@ define([
 			},
 			show: function( item ) {
 				return showProperty(item, "showBookmark");
+			}
+		},
+		restApiLocation: {
+			label: "Location",
+			type: "string",
+			expression: "optional",
+			ref: "restApiLocation",
+			show: function( item ) {
+				return showProperty(item, "showRestFields");
+			}
+		},
+		restApiMethod: {
+			label: "Method",
+			type: "string",
+			component: "dropdown",
+			ref: "restApiMethod",
+			options: [{
+				label: "GET", value: "GET"
+			}, {
+				label: "POST", value: "POST"
+			}, {
+				label: "PUT", value: "PUT"
+			}, {
+				label: "PATCH", value: "PATCH"
+			}, {
+				label: "DELETE", value: "DELETE"
+			}],
+			defaultValue: "GET",
+			show: function( item ) {
+				return showProperty(item, "showRestFields");
+			}
+		},
+		restApiHeaders: {
+			label: "Headers",
+			addTranslation: "Add Header",
+			type: "array",
+			ref: "restApiHeaders",
+			itemTitleRef: function( item ) {
+				return item.name || "Header";
+			},
+			allowAdd: true,
+			allowRemove: true,
+			allowMove: true,
+			items: {
+				headerName: {
+					label: "Name",
+					type: "string",
+					expression: "optional",
+					ref: "name",
+					defaultValue: ""
+				},
+				headerValue: {
+					label: "Value",
+					type: "string",
+					expression: "optional",
+					ref: "value",
+					defaultValue: ""
+				}
+			},
+			show: function( item ) {
+				return showProperty(item, "showRestFields");
+			}
+		},
+		restApiBody: {
+			label: "Body",
+			type: "string",
+			expression: "optional",
+			ref: "restApiBody",
+			show: function( item ) {
+				return showProperty(item, "showRestFields");
+			}
+		},
+		restApiResponse: {
+			label: "Select a variable for storing the response of the REST call. You can use the variable to further process the response.",
+			component: "text",
+			style: "hint",
+			show: function( item ) {
+				return showProperty(item, "showRestFields");
 			}
 		},
 		variable: {
@@ -2049,7 +2218,7 @@ define([
 		},
 		threshold: {
 			label: function( item ) {
-				return "Threshold" + (item.threshold && ": " + item.threshold);
+				return "Threshold".concat(item.threshold && ": ".concat(item.threshold));
 			},
 			ref: "threshold",
 			type: "number",
