@@ -1,7 +1,7 @@
 /**
  * E-mergo Actions Utility Library
  *
- * @version 20230209
+ * @version 20230216
  * @author Laurens Offereins <https://github.com/lmoffereins>
  *
  * @param  {Object} qlik       Qlik's core API
@@ -9,7 +9,6 @@
  * @param  {Object} $q         Angular's promise library
  * @param  {Object} axios      Axios
  * @param  {Object} _          Underscore
- * @param  {Object} util       Qlik's generic utility library
  * @param  {Object} translator Qlik's translation API
  * @return {Object}            E-mergo Actions API
  */
@@ -19,7 +18,6 @@ define([
 	"ng!$q",
 	"axios",
 	"underscore",
-	"util",
 	"translator"
 ], function(
 	qlik,
@@ -27,7 +25,6 @@ define([
 	$q,
 	axios,
 	_,
-	util,
 	translator
 ) {
 
@@ -56,7 +53,7 @@ define([
 	 * Wrapper for requests made to Qlik's QRS REST API
 	 *
 	 * @param  {Object|String} args Request data or url
-	 * @return {Promise} Request response
+	 * @return {Promise}            Request response
 	 */
 	request = function( args ) {
 		var globalProps = qGlobal.session.options;
@@ -68,7 +65,7 @@ define([
 
 		// Prefix QRS calls with the proxy
 		if (0 === args.url.indexOf("/qrs") && globalProps.prefix.length) {
-			args.url = globalProps.prefix.replace(/\/+$/, "") + args.url;
+			args.url = globalProps.prefix.replace(/\/+$/, "").concat(args.url);
 		}
 
 		// Default params
@@ -249,7 +246,7 @@ define([
 	 *
 	 * @param  {Object} item    Action item
 	 * @param  {Object} context Action context
-	 * @return {String} Alternate state
+	 * @return {String}         Alternate state
 	 */
 	getAlternateState = function( item, context ) {
 		return (! item.state || ! item.state.length) ? (context && context.layout && context.layout.qStateName) : item.state;
@@ -265,11 +262,11 @@ define([
 	 * cleared in this situation. Using the lower level `getField` method
 	 * instead does not solve the issue of the abstracted 'app.field()' Field API.
 	 *
-	 * @param  {Object} item  Action item
-	 * @param  {Object} state Context state
-	 * @param  {Function} callback Callback to run when the field was found
+	 * @param  {Object}   item          Action item
+	 * @param  {Object}   state         Context state
+	 * @param  {Function} callback      Callback to run when the field was found
 	 * @param  {Function} errorCallback Callback to run when the field was not found
-	 * @return {Promise} The field when it exists
+	 * @return {Promise}                The field when it exists
 	 */
 	getField = function( item, state, callback, errorCallback ) {
 		var dfd = $q.defer(), field = app.field(item.field, state), result;
@@ -311,22 +308,34 @@ define([
 	/**
 	 * Apply bookmark
 	 *
-	 * @param  {Object}  item Action
-	 * @return {Promise}      Action done
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action done
 	 */
-	applyBookmark = function( item ) {
-		app.bookmark.apply(item.bookmark);
+	applyBookmark = function( item, context ) {
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
+
+		return app.bookmark.apply(item.bookmark);
 	},
 
 	/**
 	 * Apply field selection
 	 *
-	 * @param  {Object}  item    Action
-	 * @param  {String}  context Action context or visualization scope
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Promise}         Action done
 	 */
 	applySelection = function( item, context ) {
 		var state = getAlternateState(item, context), values = [];
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
 
 		if (item.value) {
 
@@ -353,12 +362,17 @@ define([
 	 *
 	 * When no field is selected, defaults to clearing all selections.
 	 *
-	 * @param  {Object}  item    Action
-	 * @param  {String}  context Action context or visualization scope
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Promise}         Action done
 	 */
 	clearSelection = function( item, context ) {
 		var state = getAlternateState(item, context);
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
 
 		// Require a field name for a single field
 		if (item.field) {
@@ -375,10 +389,17 @@ define([
 	/**
 	 * Step back or forward in selection history
 	 *
-	 * @param  {Object}  item Action
-	 * @return {Promise}      Action done
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action done
 	 */
-	backOrForward = function( item ) {
+	backOrForward = function( item, context ) {
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
+
 		return item.eitherOr ? app.forward() : app.back();
 	},
 
@@ -387,12 +408,17 @@ define([
 	 *
 	 * When no field is selected, defaults to locking all selections.
 	 *
-	 * @param  {Object}  item    Action
-	 * @param  {String}  context Action context or visualization scope
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Promise}         Action done
 	 */
 	lockField = function( item, context ) {
 		var state = getAlternateState(item, context);
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
 
 		// Require a field name for a single field
 		if (item.field) {
@@ -409,8 +435,8 @@ define([
 	/**
 	 * Select Adjacent value
 	 *
-	 * @param  {Object}  item    Action
-	 * @param  {String}  context Action context or visualization scope
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Promise}         Action done
 	 */
 	selectAdjacent = function( item, context ) {
@@ -431,6 +457,11 @@ define([
 			}]
 		};
 
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
+
 		// Require a field name
 		if (item.field) {
 
@@ -443,7 +474,7 @@ define([
 					def.qDef.qSortCriterias = [{
 						qSortByExpression: parseInt(item.sortOrder) || 1,
 						qExpression: {
-							qv: (0 === item.sortExpression.indexOf("=") ? "" : "=") + item.sortExpression
+							qv: (0 === item.sortExpression.indexOf("=") ? "" : "=").concat(item.sortExpression)
 						}
 					}];
 				}
@@ -501,12 +532,17 @@ define([
 	/**
 	 * Select all field values
 	 *
-	 * @param  {Object}  item    Action
-	 * @param  {String}  context Action context or visualization scope
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Promise}         Action done
 	 */
 	selectAll = function( item, context ) {
 		var state = getAlternateState(item, context);
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
 
 		// Require a field name
 		if (item.field) {
@@ -519,12 +555,17 @@ define([
 	/**
 	 * Select excluded field values
 	 *
-	 * @param  {Object}  item    Action
-	 * @param  {String}  context Action context or visualization scope
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Promise}         Action done
 	 */
 	selectExcluded = function( item, context ) {
 		var state = getAlternateState(item, context);
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
 
 		// Require a field name
 		if (item.field) {
@@ -537,12 +578,17 @@ define([
 	/**
 	 * Select possible field values
 	 *
-	 * @param  {Object}  item    Action
-	 * @param  {String}  context Action context or visualization scope
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Promise}         Action done
 	 */
 	selectPossible = function( item, context ) {
 		var state = getAlternateState(item, context);
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
 
 		// Require a field name
 		if (item.field) {
@@ -555,12 +601,17 @@ define([
 	/**
 	 * Select alternative field values
 	 *
-	 * @param  {Object}  item    Action
-	 * @param  {String}  context Action context or visualization scope
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Promise}         Action done
 	 */
 	selectAlternative = function( item, context ) {
 		var state = getAlternateState(item, context);
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
 
 		// Require a field name
 		if (item.field) {
@@ -573,12 +624,17 @@ define([
 	/**
 	 * Select field values by a pareto expression
 	 *
-	 * @param  {Object}  item    Action
-	 * @param  {String}  context Action context or visualization scope
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Promise}         Action done
 	 */
 	selectPareto = function( item, context ) {
 		var dfd = $q.defer(), added = 0, threshold, selection = [], state = getAlternateState(item, context);
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
 
 		if (item.field && item.value) {
 
@@ -599,7 +655,7 @@ define([
 					}],
 					qMeasures: [{
 						qDef: {
-							qDef: (0 === item.value.indexOf("=") ? "" : "=") + item.value
+							qDef: (0 === item.value.indexOf("=") ? "" : "=").concat(item.value)
 						}
 					}],
 					qInitialDataFetch: [{
@@ -668,10 +724,17 @@ define([
 	/**
 	 * Set a Variable Value
 	 *
-	 * @param  {Object}  item Action
-	 * @return {Promise}      Action done
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action done
 	 */
-	setVariable = function( item ) {
+	setVariable = function( item, context ) {
+
+		// Bail when no selections are allowed
+		if (context.options && context.options.noSelections) {
+			return $q.resolve();
+		}
+
 		// `setContent` is deprecated since 2.1, use `setNumValue` or `setStringValue` instead
 		return app.variable["number" === typeof item.value ? "setNumValue" : "setStringValue"](item.variable, item.value);
 	},
@@ -691,7 +754,7 @@ define([
 	 */
 	formatNum = function( num ) {
 		num = Math.floor(num);
-		return (num < 10 ? "0" : "") + num.toString();
+		return (num < 10 ? "0" : "").concat(num.toString());
 	},
 
 	/**
@@ -746,10 +809,11 @@ define([
 	/**
 	 * Start a Reload
 	 *
-	 * @param  {Object}  item Action
-	 * @return {Promise}      Action done
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action done
 	 */
-	startReload = function( item ) {
+	startReload = function( item, context ) {
 		var dfd = $q.defer(),
 
 		/**
@@ -784,8 +848,8 @@ define([
 				};
 
 				// Get label defaults
-				$scope.okLabel = $scope.input.okLabel || translator.get( "Common.OK" );
-				$scope.cancelLabel = $scope.input.cancelLabel || translator.get( "Common.Cancel" );
+				$scope.okLabel = $scope.input.okLabel || translator.get("Common.OK");
+				$scope.cancelLabel = $scope.input.cancelLabel || translator.get("Common.Cancel");
 
 				// Set initial elapsed time
 				$scope.elapsedTime = getElapsedTime(timeStarted);
@@ -877,10 +941,11 @@ define([
 	 *
 	 * @server
 	 *
-	 * @param  {Object}  item Action
-	 * @return {Promise}      Action done
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action done
 	 */
-	startReloadTask = function( item ) {
+	startReloadTask = function( item, context ) {
 		var actionDfd = $q.defer(),
 
 		/**
@@ -905,8 +970,8 @@ define([
 		/**
 		 * Display a feedback message saying the task is already running
 		 *
-		 * @param {Object} task Task details
-		 * @return {Object} API of the created dialog
+		 * @param  {Object} task Task details
+		 * @return {Object}      API of the created dialog
 		 */
 		taskIsRunningDialog = function( task ) {
 			var dialog = showActionFeedback({
@@ -923,7 +988,7 @@ define([
 		 * Return the status of the session
 		 *
 		 * @param  {String} sessionId Session id
-		 * @return {Promise} Session status
+		 * @return {Promise}          Session status
 		 */
 		checkExecutionResult = function( sessionId ) {
 			var dfd = $q.defer();
@@ -959,9 +1024,9 @@ define([
 		/**
 		 * Display a feedback message saying the task is started
 		 *
-		 * @param {Object} task Task details
-		 * @param {String} sessionId Session id
-		 * @return {Object} API of the created dialog
+		 * @param  {Object} task      Task details
+		 * @param  {String} sessionId Session id
+		 * @return {Object}           API of the created dialog
 		 */
 		taskIsStartedDialog = function( task, sessionId ) {
 			/**
@@ -1073,8 +1138,8 @@ define([
 					};
 
 					// Get label defaults
-					$scope.okLabel = $scope.input.okLabel || translator.get( "Common.OK" );
-					$scope.cancelLabel = $scope.input.cancelLabel || translator.get( "Common.Cancel" );
+					$scope.okLabel = $scope.input.okLabel || translator.get("Common.OK");
+					$scope.cancelLabel = $scope.input.cancelLabel || translator.get("Common.Cancel");
 
 					// Set initial elapsed time
 					$scope.elapsedTime = getElapsedTime(timeStarted);
@@ -1128,7 +1193,7 @@ define([
 							}).then( function( resp ) {
 
 								// Trigger download for the script log as file
-								downloadTextAsFile(task.name + ".log", resp.data);
+								downloadTextAsFile(task.name.concat(".log"), resp.data);
 							});
 						});
 					}
@@ -1143,9 +1208,9 @@ define([
 		/**
 		 * Display a feedback message saying the task is not started
 		 *
-		 * @param {Object} task Task details
-		 * @param {Object} error Error details
-		 * @return {Object} API of the created dialog
+		 * @param  {Object} task  Task details
+		 * @param  {Object} error Error details
+		 * @return {Object}       API of the created dialog
 		 */
 		taskIsNotStartedDialog = function( task, error ) {
 			var dialog = showActionFeedback({
@@ -1161,8 +1226,8 @@ define([
 		/**
 		 * Display a confirmation dialog before starting the task
 		 *
-		 * @param {Object} task Task details
-		 * @return {Object} API of the created dialog
+		 * @param  {Object} task Task details
+		 * @return {Object}      API of the created dialog
 		 */
 		confirmReloadTaskDialog = function( task ) {
 			var dialog;
@@ -1251,20 +1316,22 @@ define([
 	/**
 	 * Apply a Theme
 	 *
-	 * @param  {Object}  item Action
-	 * @return {Promise}      Action done
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action done
 	 */
-	applyTheme = function( item ) {
+	applyTheme = function( item, context ) {
 		return qlik.theme.apply(item.theme);
 	},
 
 	/**
 	 * Send a request to a REST API
 	 *
-	 * @param  {Object}  item Action
-	 * @return {Promise}      Action done
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action done
 	 */
-	callRestApi = function( item ) {
+	callRestApi = function( item, context ) {
 		var dfd = $q.defer();
 
 		// Clear variable beforehand
@@ -1327,11 +1394,13 @@ define([
 	/**
 	 * Log a value to the console
 	 *
-	 * @param  {Object}  item Action
-	 * @return {Void}
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action confirmed or cancelled
 	 */
-	logToConsole = function( item ) {
+	logToConsole = function( item, context ) {
 		console.log(item.value);
+		return $q.resolve();
 	},
 
 	/**
@@ -1344,17 +1413,18 @@ define([
 	/**
 	 * Display a confirmation dialog
 	 *
-	 * @param  {Object}  item Action
-	 * @return {Promise} Action confirmed or cancelled
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action confirmed or cancelled
 	 */
-	requestConfirmation = function( item ) {
+	requestConfirmation = function( item, context ) {
 		var dfd = $q.defer();
 
 		// Construct dialog
 		requestConfirmationDialog = showActionFeedback({
 			title: item.modalTitle,
-			message: item.modalContent || ( item.modalTitle ? "" : "Are you sure?" ),
-			okLabel: item.modalOkLabel || translator.get( "Common.OK" ),
+			message: item.modalContent || ( item.modalTitle ? "" : "Are you sure?"),
+			okLabel: item.modalOkLabel || translator.get("Common.OK"),
 			cancelLabel: item.modalCancelLabel,
 			hideCancelButton: ! item.modalCancelLabel
 		});
@@ -1376,10 +1446,11 @@ define([
 	 *
 	 * @inactive Should be used _before_ opening an app.
 	 *
-	 * @param  {Object}  item Action
-	 * @return {Promise}      Action done
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action done
 	 */
-	setLanguage = function( item ) {
+	setLanguage = function( item, context ) {
 		return qlik.setLanguage(item.language);
 	},
 
@@ -1423,7 +1494,7 @@ define([
 	 * Method to return an action item's sanitized title
 	 *
 	 * @param  {Object} item Action properties
-	 * @return {String} Action item title
+	 * @return {String}      Action item title
 	 */
 	actionItemTitleRef = function( item ) {
 		var option = _.findWhere(actionOptions, { value: item.action }), title;
@@ -1534,10 +1605,11 @@ define([
 	/**
 	 * Navigate to Sheet
 	 *
-	 * @param  {Object}  item Action
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Void}
 	 */
-	goToSheet = function( item ) {
+	goToSheet = function( item, context ) {
 		qlik.navigation.gotoSheet(item.sheet);
 	},
 
@@ -1586,10 +1658,11 @@ define([
 	 *
 	 * TODO: option to send selection parameters along?
 	 *
-	 * @param  {Object}  item Action
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Void}
 	 */
-	goToAppSheet = function( item ) {
+	goToAppSheet = function( item, context ) {
 		var config = app.global.session.options, url;
 
 		if (item.app) {
@@ -1608,30 +1681,33 @@ define([
 	/**
 	 * Start Story
 	 *
-	 * @param  {Object}  item Action
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Void}
 	 */
-	startStory = function( item ) {
+	startStory = function( item, context ) {
 		item.story && qlik.navigation.gotoStory(item.story);
 	},
 
 	/**
 	 * Navigate to Website
 	 *
-	 * @param  {Object}  item Action
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Void}
 	 */
-	goToURI = function( item ) {
+	goToURI = function( item, context ) {
 		item.value && window.open(item.value, item.newTab ? "_blank" : "_self");
 	},
 
 	/**
 	 * Switch to Edit mode when allowed
 	 *
-	 * @param  {Object}  item Action
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
 	 * @return {Void}
 	 */
-	switchToEdit = function( item ) {
+	switchToEdit = function( item, context ) {
 		if (qlik.navigation.isModeAllowed(qlik.navigation.EDIT)) {
 			qlik.navigation.setMode(qlik.navigation.EDIT);
 		} else {
@@ -1669,6 +1745,13 @@ define([
 	 * @return {Promise}        Action done
 	 */
 	doOne = function( item, context ) {
+		context = context || {};
+
+		// Bail when interaction is not allowed
+		if (context.options && context.options.noInteraction) {
+			return $q.resolve();
+		}
+
 		return false !== item.enabled
 			? "function" === typeof actions[item.action]
 				? actions[item.action](item, context)
@@ -1681,7 +1764,7 @@ define([
 	 *
 	 * @param  {Array|Function} items   Multiple registered actions or callback to get actions. Provide a
 	 *                                  callback to utilize fresh updates on properties from `layout`.
-	 * @param  {Object}         context Action context
+	 * @param  {Object}         context Action context or visualization scope
 	 * @return {Promise}                Actions done. False indicates the action chain was broken.
 	 */
 	doMany = function( items, context ) {
@@ -1712,14 +1795,20 @@ define([
 	 *
 	 * @param  {Object|Function} nav     Navigation settings or callback to get navigation settings. Provide
 	 *                                   a callback to utilize fresh updates on properties from `layout`.
-	 * @param  {Object}          context Navigation context
+	 * @param  {Object}          context Navigation context or visualization scope
 	 * @return {Void}
 	 */
 	doNavigation = function( nav, context ) {
 		nav = "function" === typeof nav ? nav() : nav;
+		context = context || {};
+
+		// Bail when interaction is not allowed
+		if (context.options && context.options.noInteraction) {
+			return;
+		}
 
 		nav.navigation && (nav = nav.navigation);
-		nav.enabled && "function" === typeof navigation[nav.action] && navigation[nav.action](nav);
+		nav.enabled && "function" === typeof navigation[nav.action] && navigation[nav.action](nav, context);
 	},
 
 	/**
@@ -1752,8 +1841,8 @@ define([
 	/**
 	 * Return the item by id from a list of items
 	 *
-	 * @param  {Array} items List of items
-	 * @param  {String} id Item's cId
+	 * @param  {Array}  items   List of items
+	 * @param  {String} id      Item's cId
 	 * @return {Object|Boolean} Item or False if not found.
 	 */
 	getItem = function( items, id ) {
@@ -1765,7 +1854,7 @@ define([
 	/**
 	 * Return the action item's property
 	 *
-	 * @param  {Object}  item Action
+	 * @param  {Object}  item Action properties
 	 * @param  {Boolean} prop Property to signify for showing
 	 * @return {Boolean}      Show panel's property
 	 */
@@ -1777,7 +1866,7 @@ define([
 	/**
 	 * Return whether to show the panel's property
 	 *
-	 * @param  {Object}  item Action
+	 * @param  {Object}  item Action properties
 	 * @param  {Boolean} prop Property to signify for showing
 	 * @return {Boolean}      Show panel's property
 	 */
@@ -1789,10 +1878,10 @@ define([
 	 * Return the object in the item's tree for which the property equals
 	 * the provided value.
 	 *
-	 * @param  {Object} item Object tree
-	 * @param  {String} prop Property name
+	 * @param  {Object} item  Object tree
+	 * @param  {String} prop  Property name
 	 * @param  {Mixed}  value Value to match
-	 * @param  {Array} skip Property names to skip searching
+	 * @param  {Array}  skip  Property names to skip searching
 	 * @return {Object|Boolean} Searched object or False when not found
 	 */
 	findObjByPropValue = function( item, prop, value, skip ) {
@@ -1996,7 +2085,7 @@ define([
 					dfd.resolve(object.layout.qVariableList.qItems.map( function( b ) {
 						return {
 							value: b.qName,
-							label: 50 < b.qName.length ? b.qName.slice(0, 50) + "&hellip;" : b.qName
+							label: 50 < b.qName.length ? b.qName.slice(0, 50).concat("&hellip;") : b.qName
 						};
 					}));
 				});
@@ -2273,7 +2362,7 @@ define([
 			type: "string",
 			expression: "optional",
 			ref: "modalCancelLabel",
-			defaultValue: translator.get( "Common.Cancel" ),
+			defaultValue: translator.get("Common.Cancel"),
 			show: function( item ) {
 				return item.action === "requestConfirmation";
 			}
@@ -2283,7 +2372,7 @@ define([
 			type: "string",
 			expression: "optional",
 			ref: "modalOkLabel",
-			defaultValue: translator.get( "Common.OK" ),
+			defaultValue: translator.get("Common.OK"),
 			show: function( item ) {
 				return item.action === "requestConfirmation";
 			}
@@ -2557,18 +2646,14 @@ define([
 	 *
 	 * @return {Void}
 	 */
-	mount = function() {
-		// console.log("mounting actions");
-	},
+	mount = function() { /* Use for debugging */ },
 
 	/**
 	 * Run logic for destroying actions
 	 *
 	 * @return {Void}
 	 */
-	destroy = function() {
-		// console.log("destroying actions");
-	};
+	destroy = function() { /* Use for debugging */ };
 
 	return {
 		actionsDefinition: actionsDefinition,
