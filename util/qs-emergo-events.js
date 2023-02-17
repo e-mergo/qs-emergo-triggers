@@ -1,7 +1,7 @@
 /**
  * E-mergo Events Utility Library
  *
- * @version 20200912
+ * @version 20230217
  * @author Laurens Offereins <https://github.com/lmoffereins>
  *
  * @param  {Object} qlik              Qlik API
@@ -339,19 +339,19 @@ define([
 			// How many values are selected?
 			if (_.isEmpty(getListOfValues(item))) {
 				actionType = "withFieldAnySelection";
-				def.selectedCount.qValueExpression = "=GetSelectedCount(" + item.field + ", '', '" + state + "')";
-				def.selected.qStringExpression = "=GetFieldSelections(" + item.field + ", '|', 10000, '" + state + "')";
+				def.selectedCount.qValueExpression = "=GetSelectedCount(".concat(item.field, ", '', '", state, "')");
+				def.selected.qStringExpression = "=GetFieldSelections(".concat(item.field, ", '|', 10000, '", state, "')");
 
 			// Which values are selected?
 			} else {
 				actionType = "withFieldValuesSelected";
-				def.selected.qStringExpression = "=GetFieldSelections(" + item.field + ", '|', 10000, '" + state + "')";
+				def.selected.qStringExpression = "=GetFieldSelections(".concat(item.field, ", '|', 10000, '", state, "')");
 			}
 
 		// Is any field selected?
 		} else {
 			actionType = "withoutFieldAnySelection";
-			def.selected.qStringExpression = "=GetCurrentSelections('.', ': ', ', ', '', '" + state + "')";
+			def.selected.qStringExpression = "=GetCurrentSelections('.', ': ', ', ', '', '".concat(state, "')");
 		}
 
 		return $q.resolve({
@@ -515,28 +515,28 @@ define([
 			// How many values are selected?
 			if (item.eitherOr) {
 				actionType = "withFieldOtherFieldsCleared";
-				def.selected.qValueExpression = "=GetSelectedCount(" + item.field + ", '', '" + state + "')";
+				def.selected.qValueExpression = "=GetSelectedCount(".concat(item.field, ", '', '", state, "')");
 
 				// Consider other fields
-				def.other.qStringExpression = "=GetCurrentSelections('|', ':', ', ', '', '" +  state + "')";
+				def.other.qStringExpression = "=GetCurrentSelections('|', ':', ', ', '', '".concat(state, "')");
 			} else {
 
 				// How many values are selected?
 				if (_.isEmpty(getListOfValues(item))) {
 					actionType = "withFieldCleared";
-					def.selected.qValueExpression = "=GetSelectedCount(" + item.field + ", '', '" + state + "')";
+					def.selected.qValueExpression = "=GetSelectedCount(".concat(item.field, ", '', '", state, "')");
 
 				// Which values are selected?
 				} else {
 					actionType = "withFieldValuesCleared";
-					def.selected.qStringExpression = "=GetFieldSelections(" + item.field + ", '|', 10000, '', '" + state + "')";
+					def.selected.qStringExpression = "=GetFieldSelections(".concat(item.field, ", '|', 10000, '', '", state, "')");
 				}
 			}
 
 		// Is any field selected?
 		} else {
 			actionType = "withoutFieldAllCleared";
-			def.selected.qStringExpression = "=GetCurrentSelections('.', ': ', ', ', '', '" + state + "')";
+			def.selected.qStringExpression = "=GetCurrentSelections('.', ': ', ', ', '', '".concat(state, "')");
 		}
 
 		return $q.resolve({
@@ -1054,7 +1054,7 @@ define([
 					dfd.resolve(object.layout.qVariableList.qItems.map( function( b ) {
 						return {
 							value: b.qName,
-							label: 50 < b.qName.length ? b.qName.slice(0, 50) + "&hellip;" : b.qName
+							label: 50 < b.qName.length ? b.qName.slice(0, 50).concat("&hellip;") : b.qName
 						};
 					}));
 				});
