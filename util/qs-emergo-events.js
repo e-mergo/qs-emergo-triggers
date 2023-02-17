@@ -529,7 +529,7 @@ define([
 				// Which values are selected?
 				} else {
 					actionType = "withFieldValuesCleared";
-					def.selected.qStringExpression = "=GetFieldSelections(".concat(item.field, ", '|', 10000, '', '", state, "')");
+					def.selected.qStringExpression = "=GetFieldSelections(".concat(item.field, ", '|', 10000, '", state, "')");
 				}
 			}
 
