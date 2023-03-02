@@ -5,6 +5,7 @@
 	"author": "Laurens Offereins, E-mergo",
 	"version": "1.3.20200918",
 	"description": "Trigger advanced actions and navigation based on app events.",
+	"icon": "run",
 	"preview": "logo-emergo.png",
 	"license": "MIT License",
 	"bundle": {
