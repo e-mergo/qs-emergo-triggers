@@ -1,7 +1,7 @@
 /**
  * E-mergo Actions Utility Library
  *
- * @version 20230217
+ * @version 20230228
  * @author Laurens Offereins <https://github.com/lmoffereins>
  *
  * @param  {Object} qlik       Qlik's core API
@@ -735,8 +735,13 @@ define([
 			return $q.resolve();
 		}
 
+		// Wrap methods in `app.variable` in a promise to resolve chaining issues.
 		// `setContent` is deprecated since 2.1, use `setNumValue` or `setStringValue` instead
-		return app.variable["number" === typeof item.value ? "setNumValue" : "setStringValue"](item.variable, item.value);
+		return app.variable["number" === typeof item.value ? "setNumValue" : "setStringValue"](item.variable, item.value).catch( function() {
+			return $q.reject({ message: "Could not set the value of the variable '".concat(item.variable, "'") });
+		}).then( function() {
+			return true;
+		});
 	},
 
 	/**
@@ -1366,6 +1371,8 @@ define([
 						 */
 						value: JSON.stringify(response.data, null, "  ").replace("'", "''")
 					}, context);
+				} else {
+					return $q.reject({ message: "Could not retreive data from the response." });
 				}
 			}).catch( function( error ) {
 				var dfd = $q.defer(), dialog;
@@ -1376,7 +1383,7 @@ define([
 				// Construct dialog
 				var dialog = showActionFeedback({
 					title: "Error from ".concat(item.restApiLocation),
-					message: error.response.data ? error.response.data.error.message : (error.response.statusText || error.message),
+					message: error.response && error.response.data ? error.response.data.error.message : (error.response && error.response.statusText || error.message),
 					hideCancelButton: true
 				});
 
@@ -1752,11 +1759,20 @@ define([
 			return $q.resolve();
 		}
 
-		return false !== item.enabled
-			? "function" === typeof actions[item.action]
-				? actions[item.action](item, context)
-				: $q.reject("E-mergo actions: '".concat(item.action, "' action handler not found"), item)
-			: $q.resolve();
+		var dfd = $q.defer();
+
+		if (item.enabled) {
+			if ("function" === typeof actions[item.action]) {
+				// Execute action after short timeout tick to allow for engine updates
+				setTimeout( function() { actions[item.action](item, context).then(dfd.resolve).catch(dfd.reject); }, 50);
+			} else {
+				dfd.reject({ message: "E-mergo actions: action handler '".concat(item.action, "' not found") });
+			}
+		} else {
+			dfd.resolve();
+		}
+
+		return dfd.promise;
 	},
 
 	/**
