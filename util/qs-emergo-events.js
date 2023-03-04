@@ -1,7 +1,7 @@
 /**
  * E-mergo Events Utility Library
  *
- * @version 20230217
+ * @version 20230304
  * @author Laurens Offereins <https://github.com/lmoffereins>
  *
  * @param  {Object} qlik              Qlik API
@@ -177,7 +177,7 @@ define([
 	},
 
 	/**
-	 * Return whether arrays match in content (b contains a)
+	 * Return whether arrays match in content (a contains all of b)
 	 *
 	 * @param  {Array} a Array with values to search
 	 * @param  {Array} b Array to compare
@@ -187,11 +187,11 @@ define([
 		Array.isArray(a) || (a = [a]);
 		Array.isArray(b) || (b = [b]);
 
-		return _.isEmpty(_.difference(a, b));
+		return _.isEmpty(_.difference(b, a));
 	},
 
 	/**
-	 * Return whether arrays contain the exact same values
+	 * Return whether arrays contain the exact same values (a equals b)
 	 *
 	 * @param  {Array} a Array with values to search
 	 * @param  {Array} b Array to compare
@@ -205,7 +205,7 @@ define([
 	},
 
 	/**
-	 * Return whether the array contains any values of another (a contains b)
+	 * Return whether the array contains any values of another (a contains anything of b)
 	 *
 	 * @param  {Array} a Array with values to search
 	 * @param  {Array} b Array to compare
@@ -221,7 +221,7 @@ define([
 	},
 
 	/**
-	 * Return whether the array does not contain any values of another (a does not contain b)
+	 * Return whether the array does not contain any values of another (a does not contain anything of b)
 	 *
 	 * @param  {Array} a Array with values to search
 	 * @param  {Array} b Array to compare
@@ -274,8 +274,8 @@ define([
 		 */
 		withoutFieldAnySelection: function( prev, obj ) {
 
-			// Previous selection exists, but the current one does not
-			return (! prev.selected || (prev.selected.length <= 1)) && (obj.selected.length > 1);
+			// Previous selection does not exist, but the current one does
+			return ! prev.selected && obj.selected;
 		},
 
 		/**
@@ -303,11 +303,17 @@ define([
 		 */
 		withFieldValuesSelected: function( prev, obj, item ) {
 			var values = getListOfValues(item),
-			    prevSelected = (prev.selected.length > 1) ? prev.selected.split("|") : [],
-			    selected = (obj.selected.length > 1) ? obj.selected.split("|") : [];
+			    prevSelected = prev.selected.split("|"),
+			    selected = obj.selected.split("|");
 
-			// Previous selection contains not all the values, but the current one does
-			return (! arrayContains(prevSelected, values)) && arrayContains(selected, values);
+			// Exact match: the current selection contains only the values
+			if (item.eitherOr) {
+				return matchArraysExact(selected, values);
+
+			// Fuzzy match: previous selection does not contain all the values, but the current one does
+			} else {
+				return ! matchArrays(prevSelected, values) && matchArrays(selected, values);
+			}
 		}
 	},
 
@@ -351,7 +357,7 @@ define([
 		// Is any field selected?
 		} else {
 			actionType = "withoutFieldAnySelection";
-			def.selected.qStringExpression = "=GetCurrentSelections('.', ': ', ', ', '', '".concat(state, "')");
+			def.selected.qStringExpression = "=Len(GetCurrentSelections('.', ': ', ', ', '', '".concat(state, "'))");
 		}
 
 		return $q.resolve({
@@ -434,7 +440,7 @@ define([
 		withoutFieldAllCleared: function( prev, obj ) {
 
 			// Previous selection exists, but the current one does not
-			return prev.selected && (prev.selected.length > 1) && (obj.selected.length <= 1);
+			return prev.selected && ! obj.selected;
 		},
 
 		/**
@@ -476,8 +482,8 @@ define([
 		 */
 		withFieldValuesCleared: function( prev, obj, item ) {
 			var values = getListOfValues(item),
-			    prevSelected = (prev.selected.length > 1) ? prev.selected.split("|") : [],
-			    selected = (obj.selected.length > 1) ? obj.selected.split("|") : [];
+			    prevSelected = prev.selected.split("|"),
+			    selected = obj.selected.split("|");
 
 			// Previous selection contains one of the values, but the current one does not
 			return arrayContains(prevSelected, values) && arrayNotContains(selected, values);
@@ -536,7 +542,7 @@ define([
 		// Is any field selected?
 		} else {
 			actionType = "withoutFieldAllCleared";
-			def.selected.qStringExpression = "=GetCurrentSelections('.', ': ', ', ', '', '".concat(state, "')");
+			def.selected.qValueExpression = "=Len(GetCurrentSelections('.', ': ', ', ', '', '".concat(state, "'))");
 		}
 
 		return $q.resolve({
