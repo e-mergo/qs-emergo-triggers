@@ -17,14 +17,7 @@ define([
 	"underscore",
 	"ng!$q",
 	"translator"
-], function(
-	qlik,
-	qvangular,
-	_,
-	$q,
-	translator
-) {
-
+], function( qlik, qvangular, _, $q, translator ) {
 	/**
 	 * Holds the reference to the current app's API
 	 *
@@ -123,10 +116,10 @@ define([
 		value: "setVariable",
 		showVariable: true,
 		showValue: true
-	// }, {
-	// 	label: "Theme Applied",
-	// 	value: "applyTheme",
-	// 	showTheme: true
+	}, {
+		label: "Theme Changed",
+		value: "changeTheme",
+		showTheme: true
 	}, {
 		label: "Sheet Opened",
 		value: "openSheet"
@@ -714,16 +707,144 @@ define([
 	},
 
 	/**
-	 * Event for applying a Theme
+	 * Holds the theme's registered domains and triggers
 	 *
-	 * TODO
+	 * @type {Object}
+	 */
+	themeTriggers = {},
+
+	/**
+	 * Holds the single theme's object id of the session
+	 */
+	themeObjId,
+
+	/**
+	 * Initiate the theme change event listener for the domain
+	 *
+	 * @param  {String} domain Scope domain
+	 * @return {Void}
+	 */
+	mountChangeTheme = function( domain ) {
+
+		// Start theme change event listener when initiated for the first time
+		if (_.isEmpty(themeTriggers)) {
+			createChangeThemeListener();
+		}
+
+		// Register the domain
+		if (! themeTriggers[domain]) {
+			themeTriggers[domain] = {};
+		}
+	},
+
+	/**
+	 * Start the theme change event listener
+	 *
+	 * @return {Void}
+	 */
+	createChangeThemeListener = function() {
+		/**
+		 * Object definition to get the app's theme
+		 *
+		 * @type {Object}
+		 */
+		var def = {
+			qAppObjectListDef: {
+				qType: "appprops",
+				qData: {
+					theme: "/theme"
+				}
+			}
+		},
+
+		// Holds the previous theme identifier
+		prev = false;
+
+		// Start session object. The object is created once, but its callback
+		// will be run everytime the object's listobject is refreshed.
+		app.createGenericObject(def, function( obj ) {
+			var theme = obj.qAppObjectList.qItems[0].qData.theme;
+
+			// Store the obj reference
+			themeObjId = obj.qInfo.qId;
+
+			// Bail when no change happened
+			if (prev === theme) {
+				return;
+			}
+
+			// Run all registered triggers at the same time
+			_.flatten(_.values(themeTriggers).map(_.values)).forEach( function( i ) {
+				i(theme, prev);
+			});
+
+			// Set holder of the previous value for the next check
+			prev = theme;
+		});
+	},
+
+	/**
+	 * Stop the theme change event listener
+	 *
+	 * @param  {String} domain Scope domain
+	 * @return {Void}
+	 */
+	destroyChangeTheme = function( domain ) {
+
+		// Remove the domain's triggers
+		themeTriggers[domain] && (delete themeTriggers[domain]);
+
+		// Destroy the session object when no domains remain
+		if (_.isEmpty(themeTriggers)) {
+			themeObjId && app.destroySessionObject(themeObjId);
+		}
+	},
+
+	/**
+	 * Event for changing the app's Theme
 	 * 
 	 * @param  {Object}  item    Event
 	 * @param  {Object}  context Event context
 	 * @return {Promise}         Event handlers
 	 */
-	applyTheme = function( item, context ) {
-		return;
+	changeTheme = function( item, context ) {
+		var withoutValues = (! item.theme || ! item.theme.length);
+
+		return $q.resolve({
+			/**
+			 * Mount the event listener
+			 *
+			 * @param  {Function} triggerActions Method to trigger event actions
+			 * @return {Promise} Event is mounted
+			 */
+			mount: function( triggerActions ) {
+
+				// Register the theme trigger
+				themeTriggers[this.$id][item.cId] = function( theme, prev ) {
+
+					// Release trigger when ...
+					// ... any change happened
+					if (withoutValues) {
+						triggerActions();
+
+					// ... or the value matches exactly
+					} else if (! withoutValues && item.theme === theme) {
+						triggerActions();
+					}
+				};
+
+				return $q.resolve();
+			},
+
+			/**
+			 * Destroy the event listener
+			 *
+			 * @return {Void}
+			 */
+			destroy: function() {
+				themeTriggers[this.$id][item.cId] && (delete themeTriggers[this.$id][item.cId]);
+			}
+		});
 	},
 
 	/**
@@ -768,9 +889,10 @@ define([
 	/**
 	 * Initiate the timer for the domain
 	 *
+	 * @param  {String} domain Scope domain
 	 * @return {Void}
 	 */
-	initTimer = function( domain ) {
+	mountTimer = function( domain ) {
 
 		// Start timer when initiated for the first time
 		if (_.isEmpty(timerTriggers)) {
@@ -806,7 +928,7 @@ define([
 			// outside overwriting of the `timePassed` counter variable.
 			j = timePassed;
 
-			// Run all registered timer triggers at the same time
+			// Run all registered triggers at the same time
 			_.flatten(_.values(timerTriggers).map(_.values)).forEach( function( i ) {
 				i(j);
 			});
@@ -822,9 +944,10 @@ define([
 	/**
 	 * Stop the timer
 	 *
+	 * @param  {String} domain Scope domain
 	 * @return {Void}
 	 */
-	removeTimer = function( domain ) {
+	destroyTimer = function( domain ) {
 
 		// Remove the domain's triggers
 		timerTriggers[domain] && (delete timerTriggers[domain]);
@@ -918,7 +1041,7 @@ define([
 		setVariable: setVariable,
 
 		// Theme
-		// applyTheme: applyTheme,
+		changeTheme: changeTheme,
 
 		// Navigation
 		openSheet: openSheet,
@@ -1080,12 +1203,15 @@ define([
 				var dfd = $q.defer();
 
 				qlik.getThemeList().then( function( items ) {
-					dfd.resolve( items.map( function( a ) {
+					dfd.resolve([{
+						label: translator.get("properties.selectValue"),
+						value: ""
+					}].concat(items.map( function( a ) {
 						return {
 							label: a.name,
 							value: a.id
 						};
-					}));
+					})));
 				});
 
 				return dfd.promise;
@@ -1267,8 +1393,11 @@ define([
 	 */
 	mount = function( $scope ) {
 
+		// Start theme listener
+		mountChangeTheme($scope.$id);
+
 		// Start global timer
-		initTimer($scope.$id);
+		mountTimer($scope.$id);
 	},
 
 	/**
@@ -1279,8 +1408,11 @@ define([
 	 */
 	destroy = function( $scope ) {
 
+		// Remove theme listener
+		destroyChangeTheme($scope.$id);
+
 		// Remove global timer
-		removeTimer($scope.$id);
+		destroyTimer($scope.$id);
 	};
 
 	return {
