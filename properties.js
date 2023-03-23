@@ -5,6 +5,8 @@
  * @param  {Object} util          E-mergo utility functions
  * @param  {Object} emergoEvents  E-mergo Events API
  * @param  {Object} emergoActions E-mergo Actions API
+ * @param  {Object} docs          E-mergo documentation functions
+ * @param  {String} readme        Extension readme
  * @param  {String} qext          Extension QEXT data
  * @return {Object}               Extension Property Panel definition
  */
@@ -13,15 +15,24 @@ define([
 	"./util/util",
 	"./util/qs-emergo-events",
 	"./util/qs-emergo-actions",
+	"./docs/docs",
+	"text!./README.md",
 	"text!./qs-emergo-triggers.qext"
-], function( _, util, emergoEvents, emergoActions, qext ) {
+], function( _, util, emergoEvents, emergoActions, docs, readme, qext ) {
+
+	/**
+	 * Holds the QEXT data
+	 *
+	 * @type {Object}
+	 */
+	var qext = JSON.parse(qext),
 
 	/**
 	 * Define a subset of the events definition
 	 *
 	 * @type {Object}
 	 */
-	var eventsDefinition = (function(){
+	eventsDefinition = (function(){
 		var def = {}, i;
 
 		for (i in emergoEvents.eventsDefinition) {
@@ -49,7 +60,7 @@ define([
 
 			// Signal disabled triggers
 			if (! trigger.enabled) {
-				label = "// " + label;
+				label = "// ".concat(label);
 			}
 
 			return label;
@@ -132,7 +143,7 @@ define([
 		 * @param {Object} layout Extension settings layout
 		 */
 		add: function( item, layout ) {
-			item.label = "Trigger " + (layout.props.triggers.length + 1);
+			item.label = "Trigger ".concat(layout.props.triggers.length + 1);
 		}
 	},
 
@@ -152,7 +163,7 @@ define([
 	 */
 	about = {
 		label: function() {
-			return "About " + JSON.parse(qext).title;
+			return "About ".concat(qext.title);
 		},
 		type: "items",
 		items: {
@@ -162,7 +173,7 @@ define([
 			},
 			version: {
 				label: function() {
-					return "Version: " + JSON.parse(qext).version;
+					return "Version: ".concat(qext.version);
 				},
 				component: "text"
 			},
@@ -175,7 +186,7 @@ define([
 				component: "button",
 				action: function() {
 					util.requireMarkdownMimetype().finally( function() {
-						window.open(window.requirejs.toUrl("extensions/qs-emergo-triggers/docs/docs.html"), "_blank");
+						docs.showModal(readme, qext);
 					});
 				}
 			}
