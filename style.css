@@ -3,20 +3,22 @@
  *
  * @package E-mergo Tools Bundle
  */
-.qs-emergo-triggers.requirements-wrapper {
-}
 
 .qs-emergo-triggers.requirements-wrapper .requirements {
 	font-size: 13px;
 	font-weight: 700;
 	text-align: center;
+	width: 250px;
 }
 
 .qv-layout-xsmall .qs-emergo-triggers.requirements-wrapper .requirements {
 	width: 200px;
 }
 
-.qs-emergo-triggers.requirements-wrapper .requirements .trigger-count {
+.qv-layout-small .qs-emergo-triggers.requirements-wrapper .requirements .header,
+.qv-layout-spark .qs-emergo-triggers.requirements-wrapper .requirements .header,
+.qv-layout-xsmall .qs-emergo-triggers.requirements-wrapper .requirements .header {
+	max-width: none;
 }
 
 .qs-emergo-triggers.requirements-wrapper .requirements .trigger-list {
@@ -36,13 +38,6 @@
 
 .qv-layout-xsmall .qs-emergo-triggers.requirements-wrapper .requirements .trigger-list .trigger-item {
 	width: 180px;
-}
-
-.qs-emergo-triggers.requirements-wrapper .requirements .trigger-list .trigger-label {
-	display: block;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
 
 /* Card-based themes */
