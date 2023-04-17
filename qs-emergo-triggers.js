@@ -68,7 +68,7 @@ define([
 		$scope.do = function( trigger ) {
 
 			// Execute button actions when not editing the sheet and interaction is allowed
-			if (! $scope.object.inEditState() && ! $scope.options.noInteraction) {
+			if (! $scope.object.inEditState() && ! ($scope.options && $scope.options.noInteraction)) {
 				emergoActions.doMany(trigger, $scope).then( function( done ) {
 
 					// Evaluate navigation settings
