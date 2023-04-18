@@ -34,7 +34,7 @@ Below is a detailed description of the available features of this extension.
 ### Triggers
 Create a set of triggers. Do this by adding triggers one by one through the *Add Trigger* button.
 
-Actions of a trigger may fire events that release other triggers. Triggers may run simultaneously. When setting up triggers be aware that you do not create infinite action loops.
+Actions of a trigger may fire events that release other triggers. Triggers may run simultaneously. When setting up triggers be aware to not create infinite action loops.
 
 `Note that triggers are only effective for the sheet on which they are registered.`
 
@@ -61,6 +61,7 @@ Select on which event the trigger should listen for triggering its actions. Some
   - **Value** Return a non-zero, non-empty value to trigger the event, otherwise the event is not triggered. Prepend an expression with `=` for the engine to process the expression.
 - **Variable Set** The trigger is run when a variable's value is changed. Note that this concerns the actual value of the variable, not the result of any expression which the variable might contain. For checking the result of a variable's expression, use the *Expression Matched* event type.
   - **Value** When not providing a Value, the event applies to *any* value change on the specified variable.
+- **Theme Changed** The trigger is run when the app's theme is changed.
 - **Sheet Opened** The trigger is run when the current sheet is opened.
 - **Time Passed** The trigger is run when a specified time is passed since the opening of the sheet.
   - **Interval** Return a number in seconds that counts as the time window between each trigger, starting from the opening of the sheet. Note that the first second is usually skipped due to the time required for loading up all objects on the sheet.
@@ -118,6 +119,16 @@ Note that the following requirements apply:
 
 #### Apply Theme
 This action sets the current Qlik Sense visual theme to the specified theme. You can pick from a list of available themes in the current app. This functionality allows for theme-switching for use cases like font-scaling, different color tones, etcetera.
+
+#### Call REST API
+This action sends a request to a REST API. As this is a simple implementation of sending an HTTP request, interpretation of the response content is up to the developer. The response content will be parsed into a JSON string and stored in the selected variable. The following parameters of the request are configurable:
+- **Location** The URI to send the request to.
+- **Method** The HTTP method of the request.
+- **Headers** Additional HTTP headers to send with the requst.
+- **Body** The optional request body. The provided string will be interpreted as a JSON object.
+- **Variable** The variable to store the response content into.
+
+Note that when using this action in Qlik Cloud the requested resource locations need to be allowlisted in the Content Security Policy (CSP) administration section (as `connect-src`). Refer to your tenant's administrator when you have no permission to create new CSP entries.
 
 #### Log to Console
 This action logs the result of the provided expression to the browser's console. This functionality is provided for debugging purposes.
