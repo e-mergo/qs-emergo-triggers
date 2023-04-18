@@ -1,7 +1,7 @@
 ---
-Qlik Sense Visualization Extension
+Type: Qlik Sense Visualization Extension
 Name: E-mergo Triggers
-Version: 1.3.20200918
+Version: 1.4-beta
 QEXT: qs-emergo-triggers.qext
 ---
 
@@ -158,7 +158,20 @@ Requests for additional features can be posted in the extension's GitHub reposit
 
 ## Changelog
 
-#### 1.3.20200918 - QS Sept 2020
+#### 1.4-beta - QS November 2022
+- Ready for Qlik Cloud.
+- Renamed extension label to improve discoverability in the extensions list.
+- Added the _Theme Changed_ event.
+- Added the _Call REST API_ action.
+- Fixed parsing actions in between action executions, so that subsequent actions are re-evaluated with engine updates.
+- Fixed chaining actions and navigation. Broken action chains will no longer trigger navigation.
+- Fixed breaking the action chain when the _Request confirmation_ dialog is still active. This prevents infinitely overlapping dialogs for the _Time Passed_ event.
+- Fixed bugs in listening for the _Field Selected_ and _Field Cleared_ events.
+- Fixed execution of actions when in noInteraction or noSelections mode.
+- Fixed sorting of actions.
+- Updated docs files.
+
+#### 1.3.20200918 - QS September 2022
 - Added the _Request confirmation_ action.
 - Fixed firing of the _Field Selected_ event when 0 values are selected.
 - Fixed accidental double registration of event listeners.
