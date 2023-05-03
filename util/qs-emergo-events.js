@@ -57,7 +57,7 @@ define([
 			var label;
 
 			// When values are not defined, use Once/Continuous
-			if (item.field && (! item.value || ! item.value.length)) {
+			if (! item.value || ! item.value.length) {
 				label = "Occurence frequency";
 
 			// When values are defined, use Many/Exact
@@ -71,7 +71,7 @@ define([
 			var options;
 
 			// When values are not defined, use Once/Continuous
-			if (item.field && (! item.value || ! item.value.length)) {
+			if (! item.value || ! item.value.length) {
 				options = [{
 					label: "Once",
 					value: false,
@@ -263,12 +263,13 @@ define([
 		 *
 		 * @param  {Object} prev Previous object data
 		 * @param  {Object} obj Current object data
+		 * @param  {Object} item The action item
 		 * @return {Boolean} Are any selections made?
 		 */
-		withoutFieldAnySelection: function( prev, obj ) {
+		withoutFieldAnySelection: function( prev, obj, item ) {
 
-			// Previous selection does not exist, but the current one does
-			return ! prev.selected && obj.selected;
+			// The new selection is different, or the previous selection does not exist, but the current one does
+			return item.eitherOr ? (obj.selectedCount && prev.selected !== obj.selected) : (! prev.selectedCount && obj.selectedCount);
 		},
 
 		/**
@@ -350,7 +351,8 @@ define([
 		// Is any field selected?
 		} else {
 			actionType = "withoutFieldAnySelection";
-			def.selected.qStringExpression = "=Len(GetCurrentSelections('.', ': ', ', ', '', '".concat(state, "'))");
+			def.selectedCount.qValueExpression = "=Len(GetCurrentSelections('.', ': ', ', ', '', '".concat(state, "'))");
+			def.selected.qStringExpression = "=GetCurrentSelections('.', ': ', ', ', '', '".concat(state, "')");
 		}
 
 		return $q.resolve({
@@ -1355,11 +1357,6 @@ define([
 			})(),
 			show: function( item ) {
 				var show = showProperty(item, "eitherOrOptions");
-
-				// Hide when no field is selected for the `selectField` event
-				if ("selectField" === item.event && (! item.field)) {
-					show = false;
-				}
 
 				// Hide when no field is selected or when a value is provided for the `clearField` event
 				if ("clearField" === item.event && (! item.field || (item.value && item.value.length))) {
