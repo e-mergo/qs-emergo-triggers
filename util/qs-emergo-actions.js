@@ -1,7 +1,7 @@
 /**
  * E-mergo Actions Utility Library
  *
- * @version 20230503
+ * @version 20230504
  * @author Laurens Offereins <https://github.com/lmoffereins>
  *
  * @param  {Object} qlik       Qlik's core API
@@ -204,8 +204,12 @@ define([
 		valueLabel: "Expression",
 		showValue: true
 	}, {
-		label: "Request confirmation",
+		label: "Request Confirmation",
 		value: "requestConfirmation"
+	}, {
+		label: "Continue or Stop",
+		value: "continueOrStop",
+		showValue: true
 	// }, {
 	// 	label: "Set Language",
 	// 	value: "setLanguage",
@@ -232,6 +236,16 @@ define([
 	 */
 	sortHypercubeByNumDesc = function( a, b ) {
 		return (a[1].qNum === b[1].qNum) ? 0 : a[1].qNum < b[1].qNum ? 1 : -1;
+	},
+
+	/**
+	 * Return a boolean from an expression's result
+	 *
+	 * @param  {String}  a Expression's result
+	 * @return {Boolean}   Does the expression evaluate to true?
+	 */
+	booleanFromExpression = function( a ) {
+		return "undefined" === typeof a || "" === a || isNaN(parseInt(a)) || !! parseInt(a);
 	},
 
 	/**
@@ -1348,14 +1362,17 @@ define([
 	callRestApi = function( item, context ) {
 		var dfd = $q.defer();
 
-		// Clear variable beforehand
-		if (item.variable) {
-			setVariable({
-				variable: item.variable,
-				value: ""
-			}, context).then(dfd.resolve);
-		} else {
-			dfd.resolve();
+		// Clear variables beforehand
+		switch (item.restApiResponse) {
+			case "json":
+				$q.all(item.restApiResponseJson.map( function( jsonItem ) {
+					return jsonItem.variable ? setVariable({ variable: jsonItem.variable, value: "" }, context) :  $q.resolve();
+				})).then(dfd.resolve);
+				break;
+
+			case "default":
+			default:
+				item.variable ? setVariable({ variable: item.variable, value: "" }, context).then(dfd.resolve) : dfd.resolve();
 		}
 
 		return dfd.promise.then( function() {
@@ -1373,7 +1390,7 @@ define([
 					// Consider selected response type
 					switch (item.restApiResponse) {
 						case "json":
-							return item.restApiResponseJson.reduce( function( promise, jsonItem ) {
+							return $q.all(item.restApiResponseJson.map( function( jsonItem ) {
 								/**
 								 * Convert path according to RFC 9601 for use with Underscore's `get()`
 								 * - Remove starting slash
@@ -1384,15 +1401,8 @@ define([
 								 */
 								var path = jsonItem.path.replace(/^\//, "").split("/").map(a => a.replace(/(~1)/g, "/")).map(a => a.replace(/(~0)/g, "~"));
 
-								return promise.then( function() {
-									if (jsonItem.variable) {
-										return setVariable({
-											variable: jsonItem.variable,
-											value: _.get(response.data, path)
-										}, context);
-									}
-								});
-							}, $q.resolve());
+								return jsonItem.variable ? setVariable({ variable: jsonItem.variable, value: _.get(response.data, path) }, context) : $q.resolve();
+							}));
 
 							break;
 
@@ -1410,6 +1420,13 @@ define([
 				} else {
 					return $q.reject({ message: "Could not retreive data from the response." });
 				}
+			}).then( function() {
+				var dfd = $q.defer();
+
+				// Add a small delay to allow changes in variable values to be fully realized in the Engine
+				setTimeout(dfd.resolve, 100);
+
+				return dfd.promise;
 			}).catch( function( error ) {
 				var dfd = $q.defer(), dialog;
 
@@ -1485,6 +1502,17 @@ define([
 	},
 
 	/**
+	 * Return whether to continue or stop the action chain
+	 *
+	 * @param  {Object}  item    Action properties
+	 * @param  {Object}  context Action context or visualization scope
+	 * @return {Promise}         Action confirmed or cancelled
+	 */
+	continueOrStop = function( item, context ) {
+		return booleanFromExpression(item.value) ? $q.resolve(true) : $q.resolve(false);
+	},
+
+	/**
 	 * Set the language
 	 *
 	 * @inactive Should be used _before_ opening an app.
@@ -1530,7 +1558,8 @@ define([
 		// Other
 		callRestApi: callRestApi,
 		logToConsole: logToConsole,
-		requestConfirmation: requestConfirmation
+		requestConfirmation: requestConfirmation,
+		continueOrStop: continueOrStop
 	},
 
 	/**
