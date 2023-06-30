@@ -3,7 +3,7 @@
 	"name": "Triggers",
 	"type": "visualization",
 	"author": "Laurens Offereins, E-mergo",
-	"version": "1.4-beta",
+	"version": "1.4-beta.2",
 	"description": "Trigger advanced actions and navigation based on app events.",
 	"icon": "run",
 	"preview": "logo-emergo.png",
