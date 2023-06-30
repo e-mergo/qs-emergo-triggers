@@ -67,7 +67,7 @@ Select on which event the trigger should listen for triggering its actions. Some
   - **Interval** Return a number in seconds that counts as the time window between each trigger, starting from the opening of the sheet. Note that the first second is usually skipped due to the time required for loading up all objects on the sheet.
   - **Start After** Return a number in seconds which will act as a starting delay of the timer. This setting is available in the *Continuous* mode.
   - **Duration** Return a number in seconds which will act as a duration window after which the timer will be ignored. This settings is available in the *Continuous* mode.
-  - **Once/Continuous** When selecting *Once*, the event only applies to the first passing of the specified time. When selectin *Continuous*, the event applies to each passing of the specified time after another.
+  - **Once/Continuous** When selecting *Once*, the event only applies to the first passing of the specified time. When selecting *Continuous*, the event applies to each passing of the specified time after another.
 
 ### Actions
 Listening for an event may trigger one or multiple sequenced actions. The list of actions contains all the current ones present in the extensions provided with the *Qlik Dashboard bundle* shipped with Qlik Sense, and some new ones as well.
